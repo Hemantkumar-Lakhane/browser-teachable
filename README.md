@@ -57,27 +57,20 @@ Built entirely in the browser using **TensorFlow.js**. No backend, no data uploa
 
 **No installation required.**
 
-### Option 1 — Open directly
-1. Download `index.html` and `script.js`
-2. Place both files in the same folder
-3. Open `index.html` in **Google Chrome** or **Microsoft Edge**
-4. Allow webcam access when prompted
-5. Start collecting samples and training
-
-### Option 2 — Clone and run locally
+### Option 1 — Local Node server (Recommended)
+You need to serve the files over HTTP because we use ES modules (`<script type="module">`). Opening the HTML file directly via `file://` might block modules.
 ```bash
-git clone https://github.com/Tanmay-Kumbhare/glassbox-ai.git
-cd glassbox-ai
-# Open index.html in Chrome or Edge
+# Using python
+python -m http.server 8080
+
+# Or using Node
+npx serve .
+# Open http://localhost:8080 in Chrome or Edge
 ```
 
-### Option 3 — Live Server (VS Code)
-```bash
-git clone https://github.com/Tanmay-Kumbhare/glassbox-ai.git
-cd glassbox-ai
-# Install Live Server extension in VS Code
-# Right-click index.html → Open with Live Server
-```
+### Option 2 — Live Server (VS Code)
+1. Install Live Server extension in VS Code
+2. Right-click `index.html` → Open with Live Server
 
 > ⚠️ **Important:** Must be opened in Chrome or Edge. Firefox has limited WebGL support for TensorFlow.js. Safari is not supported.
 
@@ -107,12 +100,17 @@ cd glassbox-ai
 
 ---
 
-## 📁 Project Structure
-
 ```
 glassbox-ai/
-├── index.html      ← Full UI, layout, styles
-└── script.js       ← All ML logic and visualisation (~1950 lines)
+├── index.html       ← Main entrypoint, loads JS as modules
+├── css/             ← Stylesheets
+├── js/
+│   ├── main.js      ← Application orchestrator
+│   ├── store.js     ← Centralised application state
+│   ├── ml/          ← TensorFlow.js logic (training, prediction, etc.)
+│   ├── ui/          ← DOM state & Event Listeners
+│   └── visuals/     ← Canvas drawing & Chart.js rendering
+└── _backup/         ← Original monorepo files (for legacy purposes)
 ```
 
 ---
