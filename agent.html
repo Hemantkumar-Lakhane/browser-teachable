@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoClaim Agent Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0"></script>
+  <style>
+    body {
+      background: #f1f5f9; 
+      min-height: 100vh; 
+      padding: 0; 
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    
+    .navbar {
+      background: #0f172a;
+      color: white;
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 { margin: 0; font-size: 1.4rem; display: flex; align-items: center; gap: 8px; }
+    .logout-btn { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: bold;}
+    .logout-btn:hover { background: #dc2626; }
+
+    .dashboard-container { padding: 40px; display: flex; gap: 30px; max-width: 1200px; margin: 0 auto; }
+    .ins-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex: 1; }
+    .ins-title { font-size: 0.9rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;}
+    
+    .ins-btn { background: #2563eb; color: white; border: none; padding: 12px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; font-size: 1rem; margin-top: 15px; transition: 0.2s; }
+    .ins-btn:hover { background: #1d4ed8; }
+    .ins-btn:disabled { opacity: 0.5; background: #94a3b8; cursor: not-allowed; }
+
+    .video-wrap { position: relative; width: 100%; border-radius: 8px; background: #000; overflow: hidden; }
+    #agent-cam { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+    
+    #setup-box { background: #fffbeb; border: 1px solid #fde68a; padding: 20px; border-radius: 8px; margin: 0 auto 30px; color: #92400e; max-width: 1200px;}
+    input[type=file]::file-selector-button { background: #f59e0b; border: none; padding: 6px 12px; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;}
+    
+    .pred-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #1e293b; }
+    .pred-bar-bg { width: 100%; height: 24px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 15px; position: relative;}
+    .pred-bar-fill { height: 100%; background: #3b82f6; transition: width 0.1s ease-out; }
+    
+    .controls-row { display: flex; gap: 10px; margin-top: 15px; }
+
+    /* Print Styles for PDF Generation */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { position: absolute; left: 0; top: 0; width: 100%; border:none; padding:20px; display: block !important; }
+      body { background: white; margin: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <h1>🛡️ ClaimLens AI <span>| Surveyor Live Link</span></h1>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <span style="font-size: 0.9rem; color: #cbd5e1;">Logged in as: Surveyor</span>
+      <button class="logout-btn" onclick="window.location.href='login.html'">Logout</button>
+    </div>
+  </nav>
+
+  <div style="padding: 40px 40px 0;">
+    <div id="setup-box">
+      <strong>⚠️ Model Required:</strong> Load the exported AI model files (*.json, *.bin) to begin live field operations.<br><br>
+      <input type="file" id="loadModelFiles" multiple accept=".json,.bin">
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    <!-- LEFT: CAMERA -->
+    <div class="ins-card">
+      <div class="ins-title">📷 Field Camera</div>
+      <div class="video-wrap">
+        <video id="agent-cam" autoplay playsinline muted></video>
+        <img id="freeze-preview" style="display:none; width:100%; aspect-ratio:4/3; object-fit:cover; background:#000; border-radius:8px;">
+      </div>
+      <button class="ins-btn" id="start-cam-btn" style="background:#f8fafc; color:#0f172a; border: 1px solid #cbd5e1;">Turn On Camera</button>
+    </div>
+
+    <!-- RIGHT: AI LIVE ANALYSIS -->
+    <div class="ins-card">
+      <div class="ins-title">🎯 AI Risk Analysis</div>
+      
+      <div id="status-text" style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">
+        Start camera and load model to begin prediction.
+      </div>
+
+      <div id="prediction-bars"></div>
+
+      <div class="controls-row">
+        <button class="ins-btn" id="live-btn" disabled style="background:#10b981;">▶ Start Live Analysis</button>
+        <button class="ins-btn" id="stop-btn" style="background:#ef4444; display:none;">⏹ Stop Stream</button>
+      </div>
+      <button class="ins-btn" id="capture-btn" disabled style="margin-top: 10px; background:#f8fafc; color:#1e293b; border:2px solid #e2e8f0;">📸 Capture &amp; Freeze Frame</button>
+
+      <!-- Post-Capture Workflow -->
+      <button class="ins-btn" id="report-btn" style="display:none; background:#8b5cf6; margin-top: 10px;">📄 Generate Claim Report (PDF)</button>
+      <button class="ins-btn" id="resume-btn" style="display:none; background:#f8fafc; color:#1e293b; border:2px solid #e2e8f0; margin-top: 10px;">🔄 Discard &amp; Resume Stream</button>
+    </div>
+  </div>
+
+  <!-- PRINT ONLY AREA -->
+  <div id="print-area" style="display:none; font-family:'Segoe UI', sans-serif;">
+    <div style="border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="margin:0; color:#0f172a; font-size:24px;">🛡️ ClaimLens AI - Official Risk Report</h2>
+        <div id="report-date" style="color: #475569; font-size:14px; margin-top:6px;"></div>
+    </div>
+    <div style="display: flex; gap: 30px;">
+        <div style="flex:1;">
+             <h3 style="color:#1e293b; margin-top:0; font-size:16px;">Evidence Snapshot</h3>
+             <img id="report-img" style="width:100%; max-width:350px; border-radius:4px; border:1px solid #cbd5e1;">
+        </div>
+        <div style="flex:1;">
+             <h3 style="color:#1e293b; margin-top:0; font-size:16px;">AI Risk Analysis Breakdown</h3>
+             <ul style="list-style:none; padding:0; margin:0;" id="report-stats"></ul>
+             <div style="margin-top:30px; padding:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px;">
+                 <strong style="display:block; margin-bottom:8px; color:#334155;">Final Algorithmic Outcome:</strong>
+                 <span id="report-outcome" style="color:#0f172a; font-weight:bold; font-size:18px;"></span>
+             </div>
+        </div>
+    </div>
+    <div style="margin-top: 60px; text-align: center; color:#94a3b8; font-size: 13px; border-top:1px solid #e2e8f0; padding-top:20px;">
+       Auto-generated strictly for internal surveying workflow. Algorithm predictions act as guidance and require human surveyor authorization. ID: CLM-<script>document.write(Math.floor(Math.random()*90000)+10000)</script>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+  <script>
+    let myModel, myMetadata, myMobilenet;
+    let liveInterval = null;
+    let cameraStream = null;
+
+    // --- 1. Load Model ---
+    document.getElementById('loadModelFiles').addEventListener('change', async (e) => {
+      const files = e.target.files;
+      if (files.length < 3) return alert('Select all 3 files!');
+      
+      let jF, wF, mF;
+      for (let f of files) {
+        if(f.name.endsWith('.bin')) wF = f;
+        else if(f.name.includes('metadata')) mF = f;
+        else if(f.name.endsWith('.json')) jF = f;
+      }
+      
+      document.getElementById('setup-box').innerHTML = "⏳ Booting AI Engine...";
+      
+      myMobilenet = await mobilenet.load(); // Uses full 1024 dimension
+      myModel = await tf.loadLayersModel(tf.io.browserFiles([jF, wF]));
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+         myMetadata = JSON.parse(ev.target.result);
+         document.getElementById('setup-box').style.display = 'none'; // Hide when done
+         checkReady();
+         initEmptyBars();
+      };
+      reader.readAsText(mF);
+    });
+
+    // --- 2. Camera Logic ---
+    document.getElementById('start-cam-btn').addEventListener('click', async () => {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById('agent-cam').srcObject = cameraStream;
+        document.getElementById('start-cam-btn').style.display = 'none';
+        document.getElementById('agent-cam').style.display = 'block';
+        document.getElementById('freeze-preview').style.display = 'none';
+        checkReady();
+      } catch(e) { alert("Camera access denied."); }
+    });
+
+    function checkReady() {
+       if(myModel && myMetadata && cameraStream) {
+          document.getElementById('status-text').innerHTML = '✅ System ready. Start Live stream or capture frame.';
+          document.getElementById('status-text').style.color = '#10b981';
+          document.getElementById('live-btn').disabled = false;
+          document.getElementById('capture-btn').disabled = false;
+       }
+    }
+
+    function initEmptyBars() {
+       const pb = document.getElementById('prediction-bars');
+       pb.innerHTML = '';
+       myMetadata.classes.forEach(c => {
+          pb.innerHTML += `
+             <div class="pred-row"><span>${c}</span><span id="pct-${c}">0%</span></div>
+             <div class="pred-bar-bg"><div class="pred-bar-fill" id="bar-${c}" style="width:0%"></div></div>
+          `;
+       });
+    }
+
+    // --- 3. Pure Prediction Logic (Exact Mirror of Admin Lab) ---
+    async function executePrediction(tfSourceNode) {
+        // We use EXACTLY the unified API call used in Admin Mode
+        const activation = myMobilenet.infer(tfSourceNode, true);
+        const predictions = myModel.predict(activation);
+        const probArray = await predictions.data();
+        
+        // Update UI Bars
+        let maxProb = 0; let bestClass = "";
+        for(let i=0; i<myMetadata.classes.length; i++){
+            const cName = myMetadata.classes[i];
+            const probability = probArray[i];
+            if(probability > maxProb) { maxProb = probability; bestClass = cName; }
+            
+            const pctText = (probability * 100).toFixed(1) + "%";
+            document.getElementById('pct-'+cName).innerText = pctText;
+            document.getElementById('bar-'+cName).style.width = pctText;
+            
+            // Colorizing the winner
+            if(probability > 0.6) {
+               document.getElementById('bar-'+cName).style.background = '#10b981'; // Green
+            } else {
+               document.getElementById('bar-'+cName).style.background = '#3b82f6'; // Blue
+            }
+        }
+        
+        // Memory leak prevention
+        activation.dispose(); predictions.dispose();
+    }
+
+    // --- 4. Controls ---
+    document.getElementById('live-btn').addEventListener('click', () => {
+        document.getElementById('live-btn').style.display = 'none';
+        document.getElementById('stop-btn').style.display = 'block';
+        document.getElementById('capture-btn').style.display = 'block';
+        document.getElementById('capture-btn').disabled = false;
+        document.getElementById('report-btn').style.display = 'none';
+        document.getElementById('resume-btn').style.display = 'none';
+        
+        document.getElementById('freeze-preview').style.display = 'none';
+        document.getElementById('agent-cam').style.display = 'block';
+        
+        liveInterval = setInterval(() => {
+           executePrediction(document.getElementById('agent-cam'));
+        }, 150);
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+        clearInterval(liveInterval);
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('live-btn').style.display = 'block';
+    });
+
+    document.getElementById('resume-btn').addEventListener('click', () => {
+        document.getElementById('live-btn').click(); // Auto-start the stream back
+    });
+
+    document.getElementById('capture-btn').addEventListener('click', async () => {
+        // Stop stream
+        if(liveInterval) { clearInterval(liveInterval); }
+        
+        // Setup freeze frame visually
+        const vid = document.getElementById('agent-cam');
+        const cvs = document.createElement('canvas');
+        cvs.width = vid.videoWidth; cvs.height = vid.videoHeight;
+        cvs.getContext('2d').drawImage(vid, 0, 0);
+        
+        const fp = document.getElementById('freeze-preview');
+        fp.src = cvs.toDataURL('image/jpeg');
+        fp.style.display = 'block';
+        vid.style.display = 'none';
+        
+        // Hide/Show correct buttons
+        document.getElementById('live-btn').style.display = 'none';
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('capture-btn').style.display = 'none';
+        document.getElementById('resume-btn').style.display = 'block';
+        document.getElementById('report-btn').style.display = 'block';
+        
+        // Single final prediction loop to lock the weights on the raw canvas
+        await executePrediction(cvs);
+    });
+    
+    document.getElementById('report-btn').addEventListener('click', () => {
+        // Populate Print Area Data
+        document.getElementById('report-date').innerText = "Report Printed: " + new Date().toLocaleString();
+        document.getElementById('report-img').src = document.getElementById('freeze-preview').src;
+        
+        // Hydrate from visible UI bars
+        let bestScore = 0; let bestCls = "";
+        let listHTML = "";
+        myMetadata.classes.forEach(c => {
+           const pct = document.getElementById('pct-'+c).innerText;
+           listHTML += `<li style="margin-bottom:8px; display:flex; justify-content:space-between; border-bottom:1px solid #f1f5f9; padding-bottom:5px;">
+                          <span style="color:#475569;">${c}</span>
+                          <strong style="color:#0f172a;">${pct}</strong>
+                        </li>`;
+           const val = parseFloat(pct);
+           if (val > bestScore) { bestScore = val; bestCls = c; }
+        });
+        document.getElementById('report-stats').innerHTML = listHTML;
+        
+        // Determine Output Outcome
+        if(bestScore > 60) {
+           document.getElementById('report-outcome').innerText = `✅ Categorized confidently as "${bestCls}". Recommend immediate surveyor dispatch based on AI match.`;
+           document.getElementById('report-outcome').style.color = "#10b981";
+        } else {
+           document.getElementById('report-outcome').innerText = `⚠️ Low Confidence (${bestScore}%). Unable to safely auto-process claim. Recommend manual review.`;
+           document.getElementById('report-outcome').style.color = "#f59e0b";
+        }
+
+        window.print();
+    });
+
+  </script>
+</body>
+</html>
