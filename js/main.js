@@ -139,6 +139,102 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('startWebcamBtn').addEventListener('click', startWebcam);
 
   const startLiveBtn = document.getElementById('startLiveBtn');
+  const exportEvalPdfBtn = document.getElementById('exportEvalPdfBtn');
+  if (exportEvalPdfBtn) {
+    exportEvalPdfBtn.addEventListener('click', () => {
+      const totalSamples = store.classes.reduce((sum, c) => sum + c.embeddings.length, 0);
+      const accVal = store.epochSnapshots.length > 0 ? (store.epochSnapshots[store.epochSnapshots.length - 1].acc * 100).toFixed(1) : 'N/A';
+      
+      let classesHtml = '';
+      store.classes.forEach(cls => {
+        classesHtml += `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0;">
+            <span style="font-weight:600; color:${cls.pal.text}; display:flex; items-align:center; gap:8px;">
+              <span style="width:12px; height:12px; border-radius:50%; background:${cls.pal.color}; display:inline-block; margin-top:4px;"></span>
+              ${cls.name}
+            </span>
+            <span style="color:#64748b; font-size:14px;">${cls.embeddings.length} Samples</span>
+          </div>
+        `;
+      });
+
+      const distPairsHtml = document.getElementById('distPairs') ? document.getElementById('distPairs').innerHTML : '<i>Not computed yet.</i>';
+      const distNoteHtml = document.getElementById('distNote') ? document.getElementById('distNote').innerHTML : '';
+      const varianceHtml = document.getElementById('varianceWarn') ? document.getElementById('varianceWarn').innerHTML : '';
+
+      const reportHtml = `
+        <h1 style="color:#0f172a; margin-bottom: 5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">ModelForge AI — Detailed Evaluation Report</h1>
+        <p style="color:#64748b; font-size:14px; margin-top:0;">Generated on: ${new Date().toLocaleString()}</p>
+        
+        <div style="margin-top:20px; display:flex; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+            <h3 style="margin-top:0; color:#334155; font-size:16px;">Dataset Statistics</h3>
+            <ul style="padding-left:20px; font-size:14px; margin-bottom:0;">
+              <li><b>Total Classes:</b> ${store.classes.length}</li>
+              <li><b>Total Samples:</b> ${totalSamples}</li>
+              <li><b>Training Epochs:</b> ${store.epochSnapshots.length}</li>
+            </ul>
+          </div>
+          <div style="flex:1; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+            <h3 style="margin-top:0; color:#334155; font-size:16px;">Model Performance</h3>
+            <ul style="padding-left:20px; font-size:14px; margin-bottom:0;">
+              <li><b>Final Accuracy:</b> ${accVal}%</li>
+              <li><b>Architecture:</b> MobileNet v1 + Dense Classifier</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2 style="color:#334155; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:30px;">1. Class Breakdown</h2>
+        <div style="margin-top:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+          ${classesHtml}
+          ${varianceHtml ? `<div style="margin-top:15px; padding:10px; background:#fffbeb; color:#92400e; border-left:4px solid #f59e0b; font-size:13px;"><b>Data Quality Note:</b> ${varianceHtml}</div>` : ''}
+        </div>
+
+        <h2 style="color:#334155; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:30px;">2. Sample Quality & Diversity</h2>
+        <div style="margin-top:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+          ${document.getElementById('qualityBody') ? document.getElementById('qualityBody').innerHTML : '<i>Not computed yet.</i>'}
+        </div>
+
+        <h2 style="color:#334155; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:30px;">3. Inter-Class Semantic Distance (Separability)</h2>
+        <div style="margin-top:10px; background:#fff; padding:15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px;">
+          ${distPairsHtml}
+          <div style="margin-top:15px; font-size:13px; color:#475569;">${distNoteHtml}</div>
+        </div>
+
+        <h2 style="color:#334155; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:30px;">4. Confusion Matrix</h2>
+        <div style="overflow-x:hidden; margin-top:10px;">
+          ${document.getElementById('confusionMatrixWrapper').innerHTML}
+        </div>
+        
+        <h2 style="color:#334155; border-bottom:1px solid #cbd5e1; padding-bottom:5px; margin-top:30px;">5. Classification Metrics</h2>
+        <div style="margin-top:10px;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px; text-align:left;">
+            <thead>
+              <tr style="background:#f1f5f9; border-bottom:2px solid #cbd5e1;">
+                <th style="padding:10px; border:1px solid #e2e8f0;">Class</th>
+                <th style="padding:10px; border:1px solid #e2e8f0;">Precision</th>
+                <th style="padding:10px; border:1px solid #e2e8f0;">Recall</th>
+                <th style="padding:10px; border:1px solid #e2e8f0;">F1-Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${document.getElementById('metricsTableBody').innerHTML}
+            </tbody>
+          </table>
+        </div>
+        
+        <div style="margin-top:40px; text-align:center; color:#94a3b8; font-size:12px;">
+          <i>This report is auto-generated strictly in-browser via ModelForge AI. No data was transmitted to external servers.</i>
+        </div>
+      `;
+      
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.innerHTML = reportHtml;
+        window.print();
+      }
+    });
+  }
   const stopLiveBtn = document.getElementById('stopLiveBtn');
   
   startLiveBtn.addEventListener('click', () => {

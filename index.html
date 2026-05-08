@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -287,6 +288,47 @@
       </div>
     </div>
 
+    <!-- Model Evaluation Report -->
+    <div id="eval-card" style="display:none;" class="card">
+      <div class="card-title">
+        📊 Model Evaluation Report
+        <span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;margin-left:8px;">— performance matrix &amp; metrics</span>
+      </div>
+      
+      <div class="eval-layout" style="display:flex; flex-direction:column; gap:20px; padding:10px 0;">
+        <div style="display:flex; flex-wrap:wrap; gap:20px;">
+          <!-- Confusion Matrix -->
+          <div class="eval-matrix-container" style="flex:1; min-width:280px; overflow-x:auto;">
+            <h4 style="font-size:0.85rem; color:#475569; margin-bottom:10px;">Confusion Matrix</h4>
+            <div id="confusionMatrixWrapper"></div>
+            <div style="font-size:0.7rem; color:#94a3b8; margin-top:8px;">
+              Rows: Actual Class | Cols: Predicted Class
+            </div>
+          </div>
+          
+          <!-- Metrics Table -->
+          <div class="eval-metrics-container" style="flex:1; min-width:280px; overflow-x:auto;">
+            <h4 style="font-size:0.85rem; color:#475569; margin-bottom:10px;">Classification Report</h4>
+            <table class="eval-table" style="width:100%; border-collapse:collapse; font-size:0.8rem; text-align:left;">
+              <thead>
+                <tr style="border-bottom:2px solid #e2e8f0;">
+                  <th style="padding:8px 4px; color:#475569;">Class</th>
+                  <th style="padding:8px 4px; color:#475569;">Precision</th>
+                  <th style="padding:8px 4px; color:#475569;">Recall</th>
+                  <th style="padding:8px 4px; color:#475569;">F1-Score</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <button class="btn btn-outline" id="exportEvalPdfBtn" style="align-self:flex-start;">
+          📥 Download PDF Report
+        </button>
+      </div>
+    </div>
+
     <!-- Architecture diagram -->
     <div id="arch-card">
       <h3>🧱 Network Architecture &nbsp;<span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;">— what's inside your classifier</span></h3>
@@ -528,5 +570,8 @@
     });
   });
 </script>
+  <!-- PRINT ONLY AREA -->
+  <div id="print-area" style="display:none;"></div>
+
 </body>
 </html>

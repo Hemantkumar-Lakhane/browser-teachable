@@ -285,6 +285,10 @@ export async function importDatasetFromFolders(files) {
   });
 
   const classNames = Array.from(grouped.keys());
+  
+  // Remove default empty classes to prevent them from blocking training
+  store.classes = store.classes.filter(c => !(c.embeddings.length === 0 && (c.name === 'Class A' || c.name === 'Class B')));
+  
   const newClassNames = classNames.filter(name => !findClassByName(name));
   if (store.classes.length + newClassNames.length > MAX_CLASSES) {
     return setStatus(`This dataset needs ${classNames.length} classes. Current limit is ${MAX_CLASSES}.`, 'error');

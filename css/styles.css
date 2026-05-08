@@ -1055,3 +1055,264 @@
       .editor-canvas-wrapper { min-height: 200px; max-height: 250px; }
       .editor-controls { max-height: 50%; }
     }
+
+/* ═══════════════════════════════════════════════════════════════
+   Model Evaluation Report Styles
+   ═══════════════════════════════════════════════════════════════ */
+.eval-table th, .eval-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.eval-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.eval-table tbody tr:hover {
+  background: #f8fafc;
+}
+.cm-table {
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.cm-table th, .cm-table td {
+  border: 1px solid #cbd5e1;
+  padding: 8px;
+  min-width: 40px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cm-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+.cm-cell {
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+    }
+
+    .labeling-editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fafbfc;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .editor-header {
+      margin-bottom: 16px;
+    }
+
+    .editor-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .editor-header span {
+      display: block;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    .editor-canvas-wrapper {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 250px;
+      flex-grow: 1;
+      overflow: auto;
+    }
+
+    .labeling-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 6px;
+      cursor: crosshair;
+      display: block;
+    }
+
+    .editor-controls {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .control-group label > span:first-child {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      accent-color: #667eea;
+      cursor: pointer;
+    }
+
+    .control-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: white;
+      cursor: pointer;
+      transition: border 0.2s;
+    }
+
+    .control-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .editor-actions .btn {
+      flex: 1;
+    }
+
+    /* Scrollbar styling */
+    .labeling-grid::-webkit-scrollbar,
+    .editor-controls::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .labeling-grid::-webkit-scrollbar-track,
+    .editor-controls::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 3px;
+    }
+
+    .labeling-grid::-webkit-scrollbar-thumb,
+    .editor-controls::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 3px;
+    }
+
+    .labeling-grid::-webkit-scrollbar-thumb:hover,
+    .editor-controls::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media(max-width: 860px) {
+      main { grid-template-columns: 1fr; }
+      .guided-workflow { padding: 12px 16px 10px; }
+      .workflow-track { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .workflow-step { font-size: 0.85rem; padding: 10px 12px; }
+      .workflow-hint { margin-top: 10px; font-size: 0.72rem; }
+      .charts-row { grid-template-columns: 1fr; }
+      .inspector-strip { grid-template-columns: 1fr 1fr; }
+      .studio-actions, .edit-grid { grid-template-columns: 1fr; }
+      
+      /* Labeling modal responsive */
+      .labeling-content { flex-direction: column; }
+      .labeling-grid-panel { flex: 0 0 35%; border-right: none; border-bottom: 1px solid #e2e8f0; }
+      .labeling-editor-panel { flex: 1; }
+      .labeling-grid { grid-template-columns: repeat(3, 1fr); }
+      .editor-canvas-wrapper { min-height: 200px; max-height: 250px; }
+      .editor-controls { max-height: 50%; }
+    }
+
+/* ═══════════════════════════════════════════════════════════════
+   Model Evaluation Report Styles
+   ═══════════════════════════════════════════════════════════════ */
+.eval-table th, .eval-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.eval-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.eval-table tbody tr:hover {
+  background: #f8fafc;
+}
+.cm-table {
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.cm-table th, .cm-table td {
+  border: 1px solid #cbd5e1;
+  padding: 8px;
+  min-width: 40px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cm-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+.cm-cell {
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.cm-cell:hover {
+  opacity: 0.8;
+  cursor: default;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  header, #pipeline, #guidedWorkflow, main, #status-bar {
+    display: none !important;
+  }
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    border: none;
+    background: white;
+    color: black;
+    box-shadow: none;
+    padding: 20px;
+    display: block !important;
+  }
+}

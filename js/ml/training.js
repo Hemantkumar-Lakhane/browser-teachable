@@ -13,6 +13,7 @@ import { drawArchDiagram } from '../visuals/architecture.js';
 import { updateDistancePanel } from '../visuals/distance.js';
 import { initReplayCard } from '../ui/replay.js';
 import { publishActiveModelToBrowser } from './persistence.js';
+import { evaluateModel } from './evaluation.js';
 
 // ── Model Architecture Setup ─────────────────────────────────────
 
@@ -105,6 +106,7 @@ export async function trainModel() {
     drawArchDiagram();
     updateDistancePanel();
     initReplayCard();
+    await evaluateModel();
   } catch(e) {
     setStatus('❌ Training failed: ' + e.message, 'error');
     trainBtn.disabled = false;
