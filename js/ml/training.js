@@ -103,6 +103,8 @@ export async function trainModel() {
     predictImgBtn.disabled = false;
     startLiveBtn.disabled  = false;
     document.getElementById('exportBtn').disabled = false;
+    const xaiToggle = document.getElementById('xaiToggle');
+    if (xaiToggle) xaiToggle.disabled = false;
     drawArchDiagram();
     updateDistancePanel();
     initReplayCard();

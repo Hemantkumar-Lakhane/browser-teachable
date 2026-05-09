@@ -71,6 +71,33 @@ export async function predictImage(previewEl) {
   const p    = await pred.data();
   emb.dispose(); pred.dispose();
   showPrediction(p);
+  
+  // XAI logic
+  const xaiToggle = document.getElementById('xaiToggle');
+  const overlay = document.getElementById('previewOverlay');
+  if (xaiToggle && xaiToggle.checked) {
+    const maxI = Array.from(p).indexOf(Math.max(...p));
+    setStatus('🧠 Generating XAI Explainability...', 'ready');
+    const xaiResult = await window.ClaimLensXAI.generateOcclusionMap({
+      source: previewEl,
+      mobilenetModel: store.mobilenetModel,
+      classifierModel: store.classifier,
+      targetClassIndex: maxI,
+      patchSize: 32,
+      stride: 32,
+      inputSize: 224,
+      occlusionColor: 'rgba(128, 128, 128, 0.95)'
+    });
+    if (overlay) {
+      overlay.src = xaiResult.overlayDataURL;
+      overlay.style.display = 'block';
+    }
+    const whyBox = document.getElementById('whyBox');
+    if (whyBox) whyBox.innerHTML += `<br><br><b>XAI Analysis:</b> ${xaiResult.summaryText}`;
+    setStatus('✅ Prediction complete.', 'ready');
+  } else if (overlay) {
+    overlay.style.display = 'none';
+  }
 }
 
 export async function performLivePredictionStep(webcamEl) {
@@ -84,4 +111,34 @@ export async function performLivePredictionStep(webcamEl) {
   showPrediction(p, embData);
   pushTimeline(p);
   await runInspector(p, webcamEl);
+
+  // XAI logic
+  const xaiToggle = document.getElementById('xaiToggle');
+  const overlay = document.getElementById('webcamOverlay');
+  if (xaiToggle && xaiToggle.checked) {
+    const maxI = Array.from(p).indexOf(Math.max(...p));
+    
+    // Create an offscreen canvas snapshot of the webcam
+    const snap = document.createElement('canvas');
+    snap.width = webcamEl.videoWidth; snap.height = webcamEl.videoHeight;
+    snap.getContext('2d').drawImage(webcamEl, 0, 0);
+
+    const xaiResult = await window.ClaimLensXAI.generateOcclusionMap({
+      source: snap,
+      mobilenetModel: store.mobilenetModel,
+      classifierModel: store.classifier,
+      targetClassIndex: maxI,
+      patchSize: 32,
+      stride: 32,
+      inputSize: 224,
+      yieldEvery: 4,
+      occlusionColor: 'rgba(128, 128, 128, 0.95)'
+    });
+    if (overlay) {
+      overlay.src = xaiResult.overlayDataURL;
+      overlay.style.display = 'block';
+    }
+  } else if (overlay) {
+    overlay.style.display = 'none';
+  }
 }

@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/ml/xai.js"></script>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -96,14 +97,20 @@
           One root folder = one dataset. Each subfolder becomes its own class automatically.
         </div>
       </div>
-      <img id="preview" alt="preview"/>
+      <div style="position: relative;">
+        <img id="preview" alt="preview" style="display: none; width: 100%; border-radius: 8px;"/>
+        <img id="previewOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; border-radius: 8px; display: none;">
+      </div>
 
     </div>
 
     <!-- Webcam card -->
     <div class="card">
       <div class="card-title">📷 Live Data Collection <span class="step-badge">STEP 2</span></div>
-      <video id="webcam" autoplay playsinline style="width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; background: #000; aspect-ratio: 4/3; object-fit: cover;"></video>
+      <div style="position: relative; width: 100%; aspect-ratio: 4/3;">
+        <video id="webcam" autoplay playsinline style="width: 100%; height: 100%; border-radius: 8px; border: 1px solid #e2e8f0; background: #000; object-fit: cover;"></video>
+        <img id="webcamOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; border-radius: 8px; display: none;">
+      </div>
       <div class="cam-btn-row" id="camBtnRow" style="margin-top: 8px;">
         <button class="btn btn-outline btn-sm" id="startWebcamBtn">📷 Start Camera</button>
       </div>
@@ -179,6 +186,10 @@
         <button class="btn btn-green" id="predictImgBtn" disabled>🔍 Predict Image</button>
         <button class="btn btn-primary" id="startLiveBtn" disabled>▶ Start Live</button>
         <button class="btn btn-stop" id="stopLiveBtn" disabled>⏹ Stop</button>
+      </div>
+      <div style="margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <input type="checkbox" id="xaiToggle" style="accent-color:#8b5cf6; width:16px; height:16px; cursor:pointer;" disabled>
+        <label for="xaiToggle" style="font-size: 0.85rem; color:#475569; font-weight:600; cursor:pointer; user-select:none;">👁️ Enable Explainable AI (XAI Heatmap)</label>
       </div>
     </div>
 
