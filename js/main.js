@@ -15,6 +15,7 @@ import { setReplaySource, stopReplayAuto, scrubToEpoch, restoreFinalWeights } fr
 import { runAutoAugment } from './ml/augment.js';
 import { toggleInternals } from './visuals/internals.js';
 import { exportModel, handleModelImport } from './ml/persistence.js';
+import { prepareDeploymentPackage } from './ml/deployment.js';
 import { resetTrainingCharts, initTimelineChart } from './visuals/charts.js';
 import { drawArchDiagram } from './visuals/architecture.js';
 import { inspectorDeactivate, inspectorActivate } from './visuals/inspector.js';
@@ -298,6 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('progressBar').style.width = '0%';
     document.getElementById('trainLog').textContent = '—';
     document.getElementById('predictImgBtn').disabled = startLiveBtn.disabled = true;
+    const deployPackageBtn = document.getElementById('deployPackageBtn');
+    if (deployPackageBtn) deployPackageBtn.disabled = true;
     document.getElementById('collectStatus').textContent = '';
     document.getElementById('distPairs').innerHTML = '<div style="font-size:0.82rem;color:#a0aec0;">Add samples to at least 2 classes to see how separable they are.</div>';
     document.getElementById('distNote').textContent = '';
@@ -391,6 +394,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Model Persistence Handlers
   const exportBtn = document.getElementById('exportBtn');
   if (exportBtn) exportBtn.addEventListener('click', exportModel);
+
+  const deployPackageBtn = document.getElementById('deployPackageBtn');
+  if (deployPackageBtn) {
+    deployPackageBtn.addEventListener('click', async () => {
+      deployPackageBtn.disabled = true;
+      try {
+        await prepareDeploymentPackage();
+      } catch (err) {
+        setStatus('Deployment package failed: ' + err.message, 'error');
+      } finally {
+        deployPackageBtn.disabled = !store.modelTrained;
+      }
+    });
+  }
   
   const importFiles = document.getElementById('importFiles');
   if (importFiles) importFiles.addEventListener('change', handleModelImport);

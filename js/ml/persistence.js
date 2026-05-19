@@ -55,7 +55,7 @@ function normalizeClassNames(meta) {
   return [];
 }
 
-function buildExportMetadata() {
+export function buildExportMetadata() {
   syncTrainingConfigFromUI();
   return {
     version: '2.0',
@@ -167,6 +167,48 @@ export async function exportModel() {
   setStatus('Model exported successfully.', 'ready');
 }
 
+export async function captureModelFilesForDeployment() {
+  if (!store.classifier) throw new Error('No trained model found to deploy.');
+  if (!store.modelTrained) throw new Error('Train or import a compatible model before deployment.');
+
+  if (!store.classMeans.length) {
+    await computeClassMeans();
+  }
+
+  let artifacts = null;
+  await store.classifier.save(tf.io.withSaveHandler(async modelArtifacts => {
+    artifacts = modelArtifacts;
+    return {
+      modelArtifactsInfo: {
+        dateSaved: new Date(),
+        modelTopologyType: 'JSON',
+        modelTopologyBytes: JSON.stringify(modelArtifacts.modelTopology || {}).length,
+        weightSpecsBytes: JSON.stringify(modelArtifacts.weightSpecs || []).length,
+        weightDataBytes: modelArtifacts.weightData?.byteLength || 0
+      }
+    };
+  }));
+
+  if (!artifacts?.weightData) throw new Error('Could not serialize model weights.');
+
+  const modelJson = {
+    format: artifacts.format || 'layers-model',
+    generatedBy: artifacts.generatedBy || 'TensorFlow.js',
+    convertedBy: artifacts.convertedBy || null,
+    modelTopology: artifacts.modelTopology,
+    weightsManifest: [{
+      paths: ['model.weights.bin'],
+      weights: artifacts.weightSpecs || []
+    }]
+  };
+
+  return {
+    modelJson: JSON.stringify(modelJson, null, 2),
+    weights: new Uint8Array(artifacts.weightData),
+    metadataJson: JSON.stringify(buildExportMetadata(), null, 2)
+  };
+}
+
 export async function handleModelImport(e) {
   const files = e.target.files;
   if (!files || files.length < 3) {
@@ -251,6 +293,8 @@ export async function handleModelImport(e) {
       document.getElementById('predictImgBtn').disabled = !canPredictWithCurrentBackbone;
       document.getElementById('startLiveBtn').disabled = !canPredictWithCurrentBackbone;
       document.getElementById('exportBtn').disabled = false;
+      const deployPackageBtn = document.getElementById('deployPackageBtn');
+      if (deployPackageBtn) deployPackageBtn.disabled = !canPredictWithCurrentBackbone;
 
       drawArchDiagram();
       await updateDistancePanel();

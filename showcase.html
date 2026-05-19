@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ModelForge - Real-Life Solutions</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -88,7 +91,10 @@
 
   <header>
     <div class="brand" onclick="window.location.href='index.html'">🛡️ ModelForge Studio</div>
+    <nav class="nav">
+    <button class="btn btn-sm" id="install-pwa-btn" style="display:none; background: #10b981; color: white; border: none; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">📥 Install App</button>
     <button class="btn-back" onclick="window.location.href='index.html'">← Back to Studio</button>
+  </nav>
   </header>
 
   <main>
@@ -142,5 +148,47 @@
     </div>
   </main>
 
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+  <script>
+    // PWA Install Logic
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-pwa-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.style.display = 'inline-block';
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+          }
+          deferredPrompt = null;
+        }
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installBtn) installBtn.style.display = 'none';
+    });
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
 </body>
 </html>

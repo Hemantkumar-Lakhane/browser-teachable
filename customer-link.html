@@ -548,7 +548,16 @@
           : [];
 
       if (!classes.length) return null;
-      return { ...meta, classes };
+      return {
+        ...meta,
+        classes,
+        backbone: meta.backbone || {
+          id: 'mobilenet-v1',
+          label: 'MobileNet v1',
+          embeddingSize: 1024,
+          inputSize: 224
+        }
+      };
     }
 
     function getClassNames() {
@@ -581,6 +590,71 @@
       if (!meta) throw new Error('metadata.json is missing valid class names.');
 
       return { model, metadata: meta, source: 'static' };
+    }
+
+    function getBackboneConfig(metadata) {
+      const id = metadata?.backbone?.id || 'mobilenet-v1';
+      const configs = {
+        'mobilenet-v1': { id, type: 'mobilenet', version: 1, alpha: 1.0, inputSize: 224 },
+        'mobilenet-v2': { id, type: 'mobilenet', version: 2, alpha: 1.0, inputSize: 224 },
+        resnet50: {
+          id,
+          type: 'tfhub',
+          inputSize: 224,
+          normalize: 'zero-one',
+          url: 'https://tfhub.dev/google/tfjs-model/imagenet/resnet_v2_50/feature_vector/3/default/1'
+        },
+        efficientnetb0: {
+          id,
+          type: 'tfhub',
+          inputSize: 224,
+          normalize: 'zero-one',
+          url: 'https://tfhub.dev/tensorflow/tfjs-model/efficientnet/b0/feature-vector/1/default/1'
+        }
+      };
+      return configs[id] || configs['mobilenet-v1'];
+    }
+
+    function preprocessForGraphModel(source, config) {
+      return tf.tidy(() => {
+        const pixels = tf.browser.fromPixels(source);
+        const resized = tf.image.resizeBilinear(pixels, [config.inputSize, config.inputSize]);
+        const batch = resized.toFloat().expandDims(0);
+        if (config.normalize === 'minus-one-one') return batch.div(127.5).sub(1);
+        return batch.div(255);
+      });
+    }
+
+    function flattenFeatureTensor(tensor) {
+      if (tensor.rank === 2) return tensor;
+      const featureCount = tensor.shape.slice(1).reduce((product, value) => product * value, 1);
+      return tensor.reshape([tensor.shape[0], featureCount]);
+    }
+
+    async function loadFeatureExtractor(metadata) {
+      const config = getBackboneConfig(metadata);
+      if (config.type === 'tfhub') {
+        const model = await tf.loadGraphModel(config.url, { fromTFHub: true });
+        return {
+          ...config,
+          infer(source) {
+            return tf.tidy(() => {
+              const input = preprocessForGraphModel(source, config);
+              const output = model.predict(input);
+              const tensor = Array.isArray(output) ? output[0] : output;
+              return flattenFeatureTensor(tensor).clone();
+            });
+          }
+        };
+      }
+
+      const model = await mobilenet.load({ version: config.version, alpha: config.alpha });
+      return {
+        ...config,
+        infer(source) {
+          return model.infer(source, true);
+        }
+      };
     }
 
     // ── Fraud Lock: disable all drag-drop on the page ──
@@ -799,11 +873,11 @@
     async function runInitSequence() {
       setStep(1, 'active');
       try {
-        myMobilenet = await mobilenet.load();
         const preferredModel = await loadBrowserPublishedModel();
         const loaded = preferredModel || await loadStaticModelFiles();
         myModel = loaded.model;
         myMetadata = loaded.metadata;
+        myMobilenet = await loadFeatureExtractor(myMetadata);
 
         setStep(1, 'done');
         setProgress(33);
@@ -862,8 +936,7 @@
 
         let activation, predictions;
         try {
-          // Same inference pattern as agent.html
-          activation = myMobilenet.infer(vid, true); // 1024D embedding
+          activation = myMobilenet.infer(vid);
           predictions = myModel.predict(activation);
           const probArray = await predictions.data();
 

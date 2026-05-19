@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AgriLens AI — Crop Inspection</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -52,6 +55,16 @@
       #print-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding:20px; font-family:'Inter', sans-serif; background: white;}
       body { background: white; margin: 0; padding: 0; }
     }
+
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 25px; width: 90%; max-width: 500px; position: relative; }
+    .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--muted); background: none; border: none; }
+    .close-btn:hover { color: white; }
+    .help-list { margin-top: 15px; padding-left: 20px; color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; }
+    .help-list li { margin-bottom: 8px; }
+    .help-list a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .help-list a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -68,6 +81,7 @@
     </div>
     
     <button class="btn-primary" id="btn-load-model">Load AI Engine →</button>
+    <button id="btn-help" style="background:transparent; border:none; color:var(--muted); font-size:0.85rem; margin-top:15px; cursor:pointer; text-decoration:underline;">ℹ️ Need a model? Learn how to train one</button>
   </div>
 
   <!-- Phase 2: Loader -->
@@ -163,6 +177,23 @@
     </div>
   </div>
 
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal-content">
+      <button class="close-btn" id="close-modal">&times;</button>
+      <h2 style="font-size:1.3rem; margin-bottom:10px;">How to Train Your Own AI</h2>
+      <p style="font-size:0.9rem; color:var(--muted);">Follow these steps to build a custom image classification model without coding:</p>
+      <ol class="help-list">
+        <li>Go to <a href="https://teachablemachine.withgoogle.com/" target="_blank">Google Teachable Machine ↗</a>.</li>
+        <li>Click <b>Get Started</b> > <b>Image Project</b> > <b>Standard Image Model</b>.</li>
+        <li>Create Classes (e.g. <i>Defect</i>, <i>Healthy</i>) and upload training images.</li>
+        <li>Click the <b>Train Model</b> button.</li>
+        <li>Click <b>Export Model</b>, select the <b>TensorFlow.js</b> tab, and click <b>Download my model</b>.</li>
+        <li>Extract the downloaded <code>.zip</code> file and upload those 3 files here!</li>
+      </ol>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
   <script src="js/ml/xai.js"></script>
@@ -171,6 +202,12 @@
     let myMobilenet = null;
     let myModel = null;
     let myMetadata = null;
+    
+    // Modal Logic
+    const helpModal = document.getElementById('help-modal');
+    document.getElementById('btn-help').addEventListener('click', () => helpModal.style.display = 'flex');
+    document.getElementById('close-modal').addEventListener('click', () => helpModal.style.display = 'none');
+    helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
     
     function showPhase(n) {
       document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
@@ -335,6 +372,13 @@
       currentImageURL = null;
       showPhase(3);
     });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
   </script>
 </body>
 </html>

@@ -96,6 +96,8 @@ export function clearLearnedState({ clearSamples = true } = {}) {
   if (trainLog) trainLog.textContent = '-';
   const exportBtn = document.getElementById('exportBtn');
   if (exportBtn) exportBtn.disabled = true;
+  const deployPackageBtn = document.getElementById('deployPackageBtn');
+  if (deployPackageBtn) deployPackageBtn.disabled = true;
   const predictImgBtn = document.getElementById('predictImgBtn');
   if (predictImgBtn) predictImgBtn.disabled = true;
   const startLiveBtn = document.getElementById('startLiveBtn');
