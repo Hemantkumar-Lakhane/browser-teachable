@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { store } from './store.js';
-import { loadMobileNet } from './ml/mobilenet.js';
+import { loadMobileNet, buildSpatialModel } from './ml/mobilenet.js';
 import { trainModel, buildClassifier } from './ml/training.js';
 import { predictImage, performLivePredictionStep } from './ml/prediction.js';
 import { addNewClass, clearClassSamples, deleteClass, addSampleFromImage, importClassFolderFiles, importDatasetFromFolders } from './ui/classes.js';
@@ -22,12 +22,15 @@ import { setStatus, setPipe } from './utils.js';
 import { initDatasetStudio, setDatasetStudioImage, openDatasetStudio } from './ui/dataset-studio.js';
 import { setupGuidedWorkflow, refreshWorkflowStep } from './ui/guided-workflow.js';
 import { openLabelingModal } from './ui/labeling-studio.js';
+import { initTrainingConfigControls, syncTrainingConfigFromUI, updateTrainingConfigLabels } from './ui/training-config.js';
+import { loadBackbone, clearLearnedState, hasCollectedSamples, getBackboneOption } from './ml/backbone.js';
 
 // ── Application Entry Point ──────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initDatasetStudio();
   setupGuidedWorkflow();
+  initTrainingConfigControls(handleBackboneChange);
   window.addSampleFromImage = addSampleFromImage;
   window.augmentClass       = (id) => runAutoAugment(id);
   window.deleteClass        = deleteClass;
@@ -175,13 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
               <li><b>Total Classes:</b> ${store.classes.length}</li>
               <li><b>Total Samples:</b> ${totalSamples}</li>
               <li><b>Training Epochs:</b> ${store.epochSnapshots.length}</li>
+              <li><b>Optimizer:</b> ${store.trainingConfig.optimizer.toUpperCase()}</li>
             </ul>
           </div>
           <div style="flex:1; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
             <h3 style="margin-top:0; color:#334155; font-size:16px;">Model Performance</h3>
             <ul style="padding-left:20px; font-size:14px; margin-bottom:0;">
               <li><b>Final Accuracy:</b> ${accVal}%</li>
-              <li><b>Architecture:</b> MobileNet v1 + Dense Classifier</li>
+              <li><b>Architecture:</b> ${(store.backbone?.label || 'MobileNet v1')} + Dense Classifier</li>
             </ul>
           </div>
         </div>
@@ -304,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addClassBtn').disabled = false;
     buildClassifier(2);
     addNewClass('Class A'); addNewClass('Class B');
+    updateTrainingConfigLabels();
     drawArchDiagram();
     refreshWorkflowStep('upload');
   });
@@ -398,3 +403,46 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshWorkflowStep('upload');
 
 });
+
+async function handleBackboneChange(nextBackboneId) {
+  const previousBackboneId = store.backboneId;
+  const select = document.getElementById('backboneSelect');
+  const option = getBackboneOption(nextBackboneId);
+
+  if (nextBackboneId === previousBackboneId) return;
+  if (hasCollectedSamples() || store.modelTrained) {
+    const ok = confirm('Changing the backbone clears collected embeddings and the trained classifier. Continue?');
+    if (!ok) {
+      if (select) select.value = previousBackboneId;
+      return;
+    }
+  }
+
+  clearLearnedState({ clearSamples: true });
+  store.classes.forEach(cls => {
+    const cnt = document.getElementById(`cnt-${cls.id}`);
+    if (cnt) cnt.textContent = '0';
+  });
+
+  try {
+    setStatus(`Switching to ${option.label}...`);
+    await loadBackbone(nextBackboneId);
+    buildSpatialModel();
+    syncTrainingConfigFromUI();
+    updateTrainingConfigLabels();
+    drawArchDiagram();
+    setStatus(`${option.label} ready. Recollect samples for the new feature space.`, 'ready');
+  } catch (err) {
+    console.error('[Backbone] switch failed:', err);
+    if (select) select.value = previousBackboneId;
+    try {
+      await loadBackbone(previousBackboneId);
+      buildSpatialModel();
+    } catch (rollbackErr) {
+      console.error('[Backbone] rollback failed:', rollbackErr);
+    }
+    updateTrainingConfigLabels();
+    drawArchDiagram();
+    setStatus(`Could not load ${option.label}: ${err.message}`, 'error');
+  }
+}

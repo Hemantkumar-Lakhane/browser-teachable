@@ -15,8 +15,19 @@
 export const store = {
   // MobileNet and Transfer Learning
   mobilenetModel: null,
+  backbone: null,
+  backboneId: 'mobilenet-v1',
+  embeddingSize: 1024,
   classifier: null,
   modelTrained: false,
+  trainingConfig: {
+    epochs: 25,
+    batchSize: 16,
+    learningRate: 0.0005,
+    optimizer: 'adam',
+    dropoutRate: 0.3,
+    hiddenUnits: 128
+  },
   
   // Custom classes the user manages
   classes: [],

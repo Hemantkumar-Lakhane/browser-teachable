@@ -5,6 +5,8 @@ import { addNewClass } from '../ui/classes.js';
 import { updateDistancePanel } from '../visuals/distance.js';
 import { initReplayCard } from '../ui/replay.js';
 import { computeClassMeans } from './dataset.js';
+import { getBackboneSummary } from './backbone.js';
+import { syncTrainingConfigFromUI, updateTrainingConfigLabels } from '../ui/training-config.js';
 
 const ACTIVE_MODEL_DB_KEY = 'indexeddb://claimlens-active-model';
 const ACTIVE_MODEL_META_KEY = 'claimlens_active_model_metadata';
@@ -54,6 +56,7 @@ function normalizeClassNames(meta) {
 }
 
 function buildExportMetadata() {
+  syncTrainingConfigFromUI();
   return {
     version: '2.0',
     date: new Date().toISOString(),
@@ -61,19 +64,29 @@ function buildExportMetadata() {
     classes: store.classes.map(cls => cls.name),
     classMeans: store.classMeans.map(mean => mean ? Array.from(mean) : null),
     epochSnapshots: serializeEpochSnapshots(),
-    replayEnabled: store.epochSnapshots.length > 0
+    replayEnabled: store.epochSnapshots.length > 0,
+    backbone: getBackboneSummary(),
+    trainingConfig: { ...store.trainingConfig }
   };
 }
 
 function buildBrowserRuntimeMetadata() {
+  syncTrainingConfigFromUI();
   return {
     version: '2.0',
     date: new Date().toISOString(),
     classCount: store.classes.length,
     classes: store.classes.map(cls => cls.name),
     classMeans: store.classMeans.map(mean => mean ? Array.from(mean) : null),
-    source: 'browser-active-model'
+    source: 'browser-active-model',
+    backbone: getBackboneSummary(),
+    trainingConfig: { ...store.trainingConfig }
   };
+}
+
+function getClassifierInputSize(model) {
+  const shape = model?.inputs?.[0]?.shape || model?.layers?.[0]?.batchInputShape;
+  return Array.isArray(shape) ? shape[shape.length - 1] : null;
 }
 
 export async function publishActiveModelToBrowser() {
@@ -197,6 +210,29 @@ export async function handleModelImport(e) {
       }
 
       resetImportedState();
+      if (meta.trainingConfig) {
+        store.trainingConfig = { ...store.trainingConfig, ...meta.trainingConfig };
+        Object.entries({
+          epochs: 'epochsInput',
+          batchSize: 'batchSizeInput',
+          learningRate: 'learningRateInput',
+          optimizer: 'optimizerSelect',
+          dropoutRate: 'dropoutInput',
+          hiddenUnits: 'hiddenUnitsInput'
+        }).forEach(([key, id]) => {
+          const el = document.getElementById(id);
+          if (el && store.trainingConfig[key] !== undefined) el.value = store.trainingConfig[key];
+        });
+        updateTrainingConfigLabels();
+      }
+
+      const importedEmbeddingSize = meta.backbone?.embeddingSize || getClassifierInputSize(store.classifier) || 1024;
+      const activeEmbeddingSize = store.backbone?.embeddingSize || store.embeddingSize;
+      const backboneMismatch = meta.backbone?.id && meta.backbone.id !== store.backboneId;
+      const shapeMismatch = activeEmbeddingSize && importedEmbeddingSize && activeEmbeddingSize !== importedEmbeddingSize;
+      const canPredictWithCurrentBackbone = !backboneMismatch && !shapeMismatch;
+      if (canPredictWithCurrentBackbone) store.embeddingSize = importedEmbeddingSize;
+
       classNames.forEach(className => addNewClass(className));
 
       if (Array.isArray(meta.classMeans) && meta.classMeans.length === classNames.length) {
@@ -210,10 +246,10 @@ export async function handleModelImport(e) {
       }
 
       store.epochSnapshots = deserializeEpochSnapshots(meta.epochSnapshots);
-      store.modelTrained = true;
+      store.modelTrained = canPredictWithCurrentBackbone;
 
-      document.getElementById('predictImgBtn').disabled = false;
-      document.getElementById('startLiveBtn').disabled = false;
+      document.getElementById('predictImgBtn').disabled = !canPredictWithCurrentBackbone;
+      document.getElementById('startLiveBtn').disabled = !canPredictWithCurrentBackbone;
       document.getElementById('exportBtn').disabled = false;
 
       drawArchDiagram();
@@ -222,13 +258,20 @@ export async function handleModelImport(e) {
       if (store.epochSnapshots.length) initReplayCard();
       else hideReplayCard();
 
-      try {
-        await publishActiveModelToBrowser();
-      } catch (publishErr) {
-        console.warn('[ClaimLens] Imported model loaded but could not be published for other app pages.', publishErr);
+      if (canPredictWithCurrentBackbone) {
+        try {
+          await publishActiveModelToBrowser();
+        } catch (publishErr) {
+          console.warn('[ClaimLens] Imported model loaded but could not be published for other app pages.', publishErr);
+        }
       }
 
-      setStatus('Model loaded successfully.', 'ready');
+      if (canPredictWithCurrentBackbone) {
+        setStatus('Model loaded successfully.', 'ready');
+      } else {
+        const expected = meta.backbone?.label || `${importedEmbeddingSize}-feature backbone`;
+        setStatus(`Model files loaded, but predictions are disabled because this classifier expects ${expected}. Switch to the matching backbone and re-import.`, 'error');
+      }
     };
 
     reader.readAsText(metaFile);

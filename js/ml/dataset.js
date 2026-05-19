@@ -6,6 +6,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { store } from '../store.js';
+import { inferEmbedding } from './backbone.js';
 
 // ── Tensor Extractions ───────────────────────────────────────────
 
@@ -16,9 +17,11 @@ import { store } from '../store.js';
  * @returns {tf.Tensor1D|null} The embedding tensor, or null if it cannot process.
  */
 export function extractEmbedding(src) {
-  if (!store.mobilenetModel) return null;
-  if (src instanceof HTMLVideoElement && (!src.videoWidth || !src.videoHeight)) return null;
-  return tf.tidy(() => store.mobilenetModel.infer(src, true));
+  const emb = inferEmbedding(src);
+  if (emb && emb.shape?.length) {
+    store.embeddingSize = emb.shape[emb.shape.length - 1] || store.embeddingSize;
+  }
+  return emb;
 }
 
 // ── Statistics & Quality ─────────────────────────────────────────

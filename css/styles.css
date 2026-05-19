@@ -354,6 +354,69 @@
     .stat-val { font-size: 1.1rem; font-weight: 800; color: #667eea; }
     .stat-lbl { font-size: 0.68rem; color: #a0aec0; margin-top: 2px; }
 
+    .advanced-training-panel {
+      margin: 12px 0;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .panel-kicker {
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .train-control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .train-control {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .train-control-wide { margin-bottom: 0; }
+    .train-control span {
+      color: #475569;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .train-control small {
+      color: #94a3b8;
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+    .train-control input,
+    .train-control select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #1e293b;
+      font-size: 0.78rem;
+      padding: 7px 8px;
+      outline: none;
+    }
+    .train-control input:focus,
+    .train-control select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+    }
+    .train-control input[type="range"] {
+      padding: 0;
+      accent-color: #667eea;
+    }
+
     .progress-wrap { 
       background: #e2e8f0; 
       border-radius: 8px; 
@@ -1045,7 +1108,7 @@
       .workflow-hint { margin-top: 10px; font-size: 0.72rem; }
       .charts-row { grid-template-columns: 1fr; }
       .inspector-strip { grid-template-columns: 1fr 1fr; }
-      .studio-actions, .edit-grid { grid-template-columns: 1fr; }
+      .studio-actions, .edit-grid, .train-control-grid { grid-template-columns: 1fr; }
       
       /* Labeling modal responsive */
       .labeling-content { flex-direction: column; }
@@ -1092,7 +1155,7 @@
   font-weight: 600;
   transition: opacity 0.2s;
 }
-    }
+
 
     .labeling-editor-panel {
       flex: 1;
@@ -1240,7 +1303,7 @@
       .workflow-hint { margin-top: 10px; font-size: 0.72rem; }
       .charts-row { grid-template-columns: 1fr; }
       .inspector-strip { grid-template-columns: 1fr 1fr; }
-      .studio-actions, .edit-grid { grid-template-columns: 1fr; }
+      .studio-actions, .edit-grid, .train-control-grid { grid-template-columns: 1fr; }
       
       /* Labeling modal responsive */
       .labeling-content { flex-direction: column; }

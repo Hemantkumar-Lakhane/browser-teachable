@@ -1,51 +1,57 @@
-// ═══════════════════════════════════════════════════════════════
-//  Teachable Machine v1.5
-//  Clean v1 base + dynamic classes (up to 5) +
-//  training charts + architecture diagram +
-//  embedding distance meter + confidence timeline
-// ═══════════════════════════════════════════════════════════════
-
 import { store } from '../store.js';
 import { setStatus, setPipe } from '../utils.js';
 import { addNewClass } from '../ui/classes.js';
 import { drawArchDiagram } from '../visuals/architecture.js';
+import { loadBackbone, getBackboneOption } from './backbone.js';
+import { updateTrainingConfigLabels } from '../ui/training-config.js';
 
 /**
- * Initializes and loads the pre-trained MobileNet model via the
- * external TensorFlow.js models API.
+ * Initializes and loads the selected frozen feature extractor.
  */
 export async function loadMobileNet() {
   setPipe('load');
-  setStatus('⏳ Loading MobileNet… first load may take ~10 seconds.');
+  const option = getBackboneOption();
+  setStatus(`Loading ${option.label}... first load may take ~10 seconds.`);
   const addClassBtn = document.getElementById('addClassBtn');
   const importDatasetBtn = document.getElementById('importDatasetBtn');
+
   try {
-    store.mobilenetModel = await mobilenet.load();
-    if (store.mobilenetModel.model && store.mobilenetModel.model.layers) {
-      console.warn('[MobileNet] layers:', store.mobilenetModel.model.layers.map(l => l.name).join(' | '));
+    await loadBackbone(store.backboneId);
+    if (store.mobilenetModel?.model?.layers) {
+      console.warn('[Backbone] layers:', store.mobilenetModel.model.layers.map(l => l.name).join(' | '));
     }
+
     buildSpatialModel();
-    console.warn('[MobileNet] loaded. spatialModel:', !!store.spatialModel, 'internalModels:', store.internalModels.length);
+    console.warn('[Backbone] loaded:', store.backboneId, 'embeddingSize:', store.embeddingSize, 'spatialModel:', !!store.spatialModel, 'internalModels:', store.internalModels.length);
     document.getElementById('ps-load').classList.replace('active','done');
-    setStatus('✅ MobileNet ready. Collect samples for each class to get started.', 'ready');
+    setStatus(`${option.label} ready. Collect samples for each class to get started.`, 'ready');
     if (addClassBtn) addClassBtn.disabled = false;
     if (importDatasetBtn) importDatasetBtn.disabled = false;
-    
-    // Default 2 classes
-    addNewClass('Class A');
-    addNewClass('Class B');
+
+    if (!store.classes.length) {
+      addNewClass('Class A');
+      addNewClass('Class B');
+    }
+    updateTrainingConfigLabels();
     drawArchDiagram();
   } catch(e) {
-    setStatus('❌ Failed to load MobileNet. Check your internet connection.', 'error');
+    console.error('[Backbone] load failed:', e);
+    setStatus(`Failed to load ${option.label}. Check your internet connection or choose MobileNet v1.`, 'error');
   }
 }
 
 /**
- * Reconstructs sub-models by iterating over MobileNet's internal layers. 
- * This enables the advanced spatial visualization needed for the inspector features.
+ * Reconstructs sub-models for MobileNet internals. Non-MobileNet graph
+ * backbones still train and predict, but skip the deep layer inspector.
  */
-function buildSpatialModel() {
+export function buildSpatialModel() {
   try {
+    if (!store.backbone || store.backbone.type !== 'mobilenet') {
+      store.spatialModel = null;
+      store.internalModels = [];
+      return;
+    }
+
     const base = store.mobilenetModel.model;
     if (!base || !base.layers) return;
     const layerNames = base.layers.map(l => l.name);
@@ -72,9 +78,8 @@ function buildSpatialModel() {
         store.internalModels.push({ model: m, layerName: found, stageIdx: i + 1 });
         const lbl = document.getElementById(`int-layer-${i + 1}`);
         if (lbl) lbl.textContent = found;
-      } catch(e) { console.error(`[MobileNet] stage${i+1} build failed:`, e); }
+      } catch(e) { console.error(`[Backbone] stage${i+1} build failed:`, e); }
     });
-
   } catch(e) {
     store.spatialModel = null;
     store.internalModels = [];

@@ -6,6 +6,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { store } from '../store.js';
+import { extractEmbedding } from '../ml/dataset.js';
 
 // ── Replay Initializations ─────────────────────────────────────────
 
@@ -57,8 +58,9 @@ export function renderReplayBars() {
 // ── Scrubbing & Processing Logic ─────────────────────────────────
 
 export async function setReplaySource(src, label) {
-  if (!store.mobilenetModel) return;
-  const t = tf.tidy(() => store.mobilenetModel.infer(src, true));
+  if (!store.backbone) return;
+  const t = extractEmbedding(src);
+  if (!t) return;
   store.replayTestEmb = await t.data();   
   t.dispose();
 
@@ -90,7 +92,7 @@ export async function scrubToEpoch(epochNum) {
   store.classifier.setWeights(tensors);
   tensors.forEach(t => t.dispose());
 
-  const embTensor  = tf.tensor2d([Array.from(store.replayTestEmb)], [1, 1024]);
+  const embTensor  = tf.tensor2d([Array.from(store.replayTestEmb)], [1, store.embeddingSize || store.replayTestEmb.length]);
   const predTensor = store.classifier.predict(embTensor);
   const probs      = await predTensor.data();
   embTensor.dispose(); predTensor.dispose();

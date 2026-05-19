@@ -80,7 +80,7 @@ export async function predictImage(previewEl) {
     setStatus('🧠 Generating XAI Explainability...', 'ready');
     const xaiResult = await window.ClaimLensXAI.generateOcclusionMap({
       source: previewEl,
-      mobilenetModel: store.mobilenetModel,
+      mobilenetModel: store.backbone || store.mobilenetModel,
       classifierModel: store.classifier,
       targetClassIndex: maxI,
       patchSize: 32,
@@ -103,7 +103,8 @@ export async function predictImage(previewEl) {
 export async function performLivePredictionStep(webcamEl) {
   if (!webcamEl.videoWidth) return;
 
-  const emb  = tf.tidy(() => store.mobilenetModel.infer(webcamEl, true));   
+  const emb  = extractEmbedding(webcamEl);
+  if (!emb) return;
   const pred = tf.tidy(() => store.classifier.predict(emb));
   const [p, embData] = await Promise.all([pred.data(), emb.data()]);
   emb.dispose(); pred.dispose();
@@ -125,7 +126,7 @@ export async function performLivePredictionStep(webcamEl) {
 
     const xaiResult = await window.ClaimLensXAI.generateOcclusionMap({
       source: snap,
-      mobilenetModel: store.mobilenetModel,
+      mobilenetModel: store.backbone || store.mobilenetModel,
       classifierModel: store.classifier,
       targetClassIndex: maxI,
       patchSize: 32,

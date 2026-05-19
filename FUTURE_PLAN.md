@@ -25,3 +25,9 @@ Integration of an **Export Pipeline Converter**:
 ### The Strategy
 * **Custom Backbones:** Allow users to swap the feature extractor from MobileNet v1 to MobileNet v2, ResNet50, or EfficientNet based on their device's memory limits.
 * **Hyperparameter Matrix:** Provide advanced UI controls for adjusting the learning rate optimizer (Adam, SGD, RMSprop), dropout rates, and batch sizes in real time.
+
+### Implementation Status
+This milestone has been promoted into the current prototype:
+* Training controls now expose optimizer, learning rate, epochs, batch size, dropout rate, and hidden layer size.
+* The feature-extractor layer is adapter-based, with MobileNet v1/v2 support and experimental TFHub ResNet50/EfficientNet B0 loading.
+* Exported metadata now records the selected backbone and training configuration for safer import compatibility checks.

@@ -84,7 +84,10 @@ export async function runInspector(softmaxProbs, webcamEl) {
     normData = await tf.tidy(() => normBatch.squeeze([0])).data();
     drawNormPanel(normData, insNormCanvas);
 
-    const embTensor = tf.tidy(() => store.mobilenetModel.infer(normBatch, true));
+    const embTensor = tf.tidy(() => {
+      const extractor = store.backbone || store.mobilenetModel;
+      return store.backbone?.type === 'tfhub' ? extractor.infer(webcamEl) : extractor.infer(normBatch, true);
+    });
     embData = await embTensor.data();
     embTensor.dispose();
     drawEmbeddingPanel(embData, insEmbedCanvas);

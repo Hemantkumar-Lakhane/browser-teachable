@@ -27,9 +27,7 @@ export async function evaluateModel() {
   store.classes.forEach((actualClass, actualIdx) => {
     actualClass.embeddings.forEach(embedding => {
       totalSamples++;
-      // Get prediction
-      // embedding is [1, 1024]. We reshape it to [1, 1024] just in case it's not
-      const input = embedding.expandDims ? embedding : embedding.reshape([1, 1024]);
+      const input = embedding.rank === 1 ? embedding.expandDims(0) : embedding.reshape([1, store.embeddingSize || embedding.shape[embedding.shape.length - 1]]);
       const prediction = store.classifier.predict(input);
       const predictedIdx = prediction.argMax(1).dataSync()[0];
       
@@ -37,7 +35,7 @@ export async function evaluateModel() {
       
       // Cleanup
       prediction.dispose();
-      if (!embedding.expandDims) input.dispose(); // if we had to reshape
+      if (input !== embedding) input.dispose();
     });
   });
 
