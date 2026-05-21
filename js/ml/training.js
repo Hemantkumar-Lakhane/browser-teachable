@@ -72,7 +72,7 @@ export async function trainModel() {
   store.epochSnapshots = [];
 
   try {
-    // Helper to draw mini loss chart on modal
+    // Helper to draw the inline mini loss chart.
     function drawMiniLossChart(losses) {
       const canvas = document.getElementById('trainingLossMini');
       if (!canvas) return;
@@ -142,7 +142,7 @@ export async function trainModel() {
           trainLog.textContent = `Epoch ${epoch+1}/${epochs} - Loss: ${logs.loss.toFixed(4)} | Acc: ${(acc*100).toFixed(1)}%`;
           pushTrainingCharts(epoch+1, logs.loss, acc);
 
-          // Update modal progress
+          // Update inline training progress.
           losses.push(logs.loss);
           accs.push(acc);
           drawMiniLossChart(losses);
@@ -181,10 +181,10 @@ export async function trainModel() {
     await computeClassMeans();
     await publishActiveModelToBrowser();
     setPipe('predict');
-    setStatus('Training complete! Predict an image or start live prediction.', 'ready');
+    setStatus('Training complete! Upload a test image or start live prediction.', 'ready');
     trainLog.textContent = 'Model trained successfully!';
 
-    // Report training finished to modal
+    // Report training finished to the inline progress panel.
     if (window.trainingFinished) {
       window.trainingFinished({
         summary: `Trained ${epochs} epochs with ${store.classes.length} classes and ${xs.shape[0]} samples.`,
@@ -195,6 +195,7 @@ export async function trainModel() {
     trainBtn.disabled = false;
     predictImgBtn.disabled = false;
     startLiveBtn.disabled = false;
+    if (window.syncPredictUploadState) window.syncPredictUploadState();
     document.getElementById('exportBtn').disabled = false;
     const deployPackageBtn = document.getElementById('deployPackageBtn');
     if (deployPackageBtn) deployPackageBtn.disabled = false;
@@ -211,9 +212,10 @@ export async function trainModel() {
     trainBtn.disabled = false;
     predictImgBtn.disabled = false;
     startLiveBtn.disabled = false;
+    if (window.syncPredictUploadState) window.syncPredictUploadState();
     const xaiToggle = document.getElementById('xaiToggle');
     if (xaiToggle) xaiToggle.disabled = false;
-    // Report error/cancellation to modal
+    // Report error/cancellation to the inline progress panel.
     if (window.reportTrainingProgress) {
       window.reportTrainingProgress({ message: errorMsg });
     }

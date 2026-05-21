@@ -292,6 +292,7 @@ export async function handleModelImport(e) {
 
       document.getElementById('predictImgBtn').disabled = !canPredictWithCurrentBackbone;
       document.getElementById('startLiveBtn').disabled = !canPredictWithCurrentBackbone;
+      if (window.syncPredictUploadState) window.syncPredictUploadState();
       document.getElementById('exportBtn').disabled = false;
       const deployPackageBtn = document.getElementById('deployPackageBtn');
       if (deployPackageBtn) deployPackageBtn.disabled = !canPredictWithCurrentBackbone;

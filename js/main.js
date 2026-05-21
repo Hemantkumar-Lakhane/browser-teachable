@@ -13,7 +13,6 @@ import { addNewClass, clearClassSamples, deleteClass, addSampleFromImage, import
 import { startWebcam, startCollection, stopCollection } from './ui/webcam.js';
 import { setReplaySource, stopReplayAuto, scrubToEpoch, restoreFinalWeights } from './ui/replay.js';
 import { runAutoAugment } from './ml/augment.js';
-import { toggleInternals } from './visuals/internals.js';
 import { exportModel, handleModelImport } from './ml/persistence.js';
 import { prepareDeploymentPackage } from './ml/deployment.js';
 import { resetTrainingCharts, initTimelineChart } from './visuals/charts.js';
@@ -52,7 +51,71 @@ document.addEventListener('DOMContentLoaded', () => {
   const importZipBtn = document.getElementById('importZipBtn');
   const openStudioBtn = document.getElementById('openStudioBtn');
   const preview = document.getElementById('preview');
+  const predictUploadDropzone = document.getElementById('predictUploadDropzone');
+  const predictImageUpload = document.getElementById('predictImageUpload');
+  const predictUploadBtn = document.getElementById('predictUploadBtn');
+  const predictPreview = document.getElementById('predictPreview');
+  const predictPreviewOverlay = document.getElementById('predictPreviewOverlay');
+  const predictPreviewWrap = document.getElementById('predictPreviewWrap');
+  const predictUploadStatus = document.getElementById('predictUploadStatus');
   let pendingClassFolderId = null;
+
+  function hasPredictionImage() {
+    return !!(predictPreview && predictPreview.src && predictPreview.naturalWidth > 0);
+  }
+
+  function syncPredictUploadState() {
+    const predictImgBtn = document.getElementById('predictImgBtn');
+    if (predictImgBtn) predictImgBtn.disabled = !(store.modelTrained && hasPredictionImage());
+    const replayUseUploadBtn = document.getElementById('replayUseUpload');
+    if (replayUseUploadBtn) {
+      replayUseUploadBtn.disabled = !(store.epochSnapshots.length && hasPredictionImage());
+    }
+  }
+
+  window.syncPredictUploadState = syncPredictUploadState;
+
+  function clearPredictionUpload() {
+    if (predictImageUpload) predictImageUpload.value = '';
+    if (predictPreview) {
+      predictPreview.removeAttribute('src');
+      predictPreview.onload = null;
+    }
+    if (predictPreviewOverlay) {
+      predictPreviewOverlay.removeAttribute('src');
+      predictPreviewOverlay.style.display = 'none';
+    }
+    if (predictPreviewWrap) predictPreviewWrap.classList.remove('has-image');
+    if (predictUploadStatus) predictUploadStatus.textContent = 'No prediction image selected.';
+    syncPredictUploadState();
+  }
+
+  function setPredictionImage(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      setStatus('Choose an image file for prediction.', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (!predictPreview) return;
+      predictPreview.onload = () => {
+        if (predictPreviewWrap) predictPreviewWrap.classList.add('has-image');
+        if (predictPreviewOverlay) {
+          predictPreviewOverlay.removeAttribute('src');
+          predictPreviewOverlay.style.display = 'none';
+        }
+        if (predictUploadStatus) {
+          predictUploadStatus.textContent = store.modelTrained
+            ? `${file.name} is ready for prediction.`
+            : `${file.name} is ready. Train the model to predict it.`;
+        }
+        syncPredictUploadState();
+      };
+      predictPreview.src = e.target.result;
+      refreshWorkflowStep('predict');
+    };
+    reader.readAsDataURL(file);
+  }
 
   window.importClassFolder = id => {
     pendingClassFolderId = id;
@@ -68,6 +131,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if (f && f.type.startsWith('image/')) readFile(f);
   });
   imageUpload.addEventListener('change', e => { if (e.target.files[0]) readFile(e.target.files[0]); });
+
+  if (predictUploadDropzone && predictImageUpload) {
+    predictUploadDropzone.addEventListener('click', () => predictImageUpload.click());
+    predictUploadDropzone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        predictImageUpload.click();
+      }
+    });
+    predictUploadDropzone.addEventListener('dragover', e => {
+      e.preventDefault();
+      predictUploadDropzone.classList.add('is-drag-over');
+    });
+    predictUploadDropzone.addEventListener('dragleave', () => {
+      predictUploadDropzone.classList.remove('is-drag-over');
+    });
+    predictUploadDropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      predictUploadDropzone.classList.remove('is-drag-over');
+      setPredictionImage(e.dataTransfer.files[0]);
+    });
+    predictImageUpload.addEventListener('change', e => {
+      if (e.target.files[0]) setPredictionImage(e.target.files[0]);
+    });
+  }
+  if (predictUploadBtn && predictImageUpload) {
+    predictUploadBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      predictImageUpload.click();
+    });
+  }
+
   if (openStudioBtn) {
     openStudioBtn.addEventListener('click', () => {
       openDatasetStudio();
@@ -192,35 +287,38 @@ document.addEventListener('DOMContentLoaded', () => {
   if (kagglePathInput && kaggleSizeLabel) {
     kagglePathInput.addEventListener('input', () => { kaggleSizeLabel.textContent = ''; });
   }
-  // ── Training modal controls ─────────────────────────────────
-  const trainingModal = document.getElementById('trainingModal');
+  // ── Inline training progress controls ─────────────────────────
+  const trainingPanel = document.getElementById('trainingPanel');
   const trainingProgressBar = document.getElementById('trainingProgressBar');
   const trainingStatusText = document.getElementById('trainingStatusText');
-  const trainingLog = document.getElementById('trainingLog');
+  const trainingRunLog = document.getElementById('trainingRunLog');
   const trainingCancelBtn = document.getElementById('trainingCancelBtn');
   const trainingCloseBtn = document.getElementById('trainingCloseBtn');
   const trainingEta = document.getElementById('trainingEta');
 
-  function openTrainingModal() {
-    if (trainingModal) trainingModal.style.display = 'flex';
+  function showTrainingPanel() {
+    if (trainingPanel) trainingPanel.style.display = 'block';
     if (trainingProgressBar) trainingProgressBar.style.width = '0%';
-    if (trainingStatusText) trainingStatusText.textContent = 'Preparing training…';
-    if (trainingLog) trainingLog.innerHTML = '';
+    if (trainingStatusText) {
+      trainingStatusText.textContent = 'Preparing training…';
+      trainingStatusText.style.color = '#475569';
+    }
+    if (trainingRunLog) trainingRunLog.innerHTML = '';
     showTrainingCancel();
     if (trainingEta) trainingEta.textContent = '—';
   }
 
-  function closeTrainingModal() {
-    if (trainingModal) trainingModal.style.display = 'none';
+  function hideTrainingPanel() {
+    if (trainingPanel) trainingPanel.style.display = 'none';
   }
 
 
   function appendTrainingLog(msg) {
-    if (!trainingLog) return;
+    if (!trainingRunLog) return;
     const p = document.createElement('div');
     p.textContent = msg;
-    trainingLog.appendChild(p);
-    trainingLog.scrollTop = trainingLog.scrollHeight;
+    trainingRunLog.appendChild(p);
+    trainingRunLog.scrollTop = trainingRunLog.scrollHeight;
   }
 
   function updateTrainingProgress({ epoch, totalEpochs, loss, acc, percent, message, eta }) {
@@ -250,7 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showTrainingCancel() {
     if (trainingCloseBtn) trainingCloseBtn.style.display = 'none';
-    if (trainingCancelBtn) trainingCancelBtn.style.display = 'inline-block';
+    if (trainingCancelBtn) {
+      trainingCancelBtn.style.display = 'inline-block';
+      trainingCancelBtn.disabled = false;
+    }
   }
 
   // Expose functions so training logic can call them
@@ -270,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (trainingCloseBtn) {
-    trainingCloseBtn.addEventListener('click', () => closeTrainingModal());
+    trainingCloseBtn.addEventListener('click', () => hideTrainingPanel());
   }
   if (startCloudImportBtn) {
     startCloudImportBtn.addEventListener('click', async () => {
@@ -474,13 +575,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addClassBtn').addEventListener('click', () => addNewClass());
   
   document.getElementById('trainBtn').addEventListener('click', async () => {
-    // Open training modal and mark training as not cancelled
+    // Show inline training progress and mark training as not cancelled.
     window.__trainingCancelled = false;
-    openTrainingModal();
     refreshWorkflowStep('train');
+    showTrainingPanel();
 
     try {
-      // let the UI update and modal render before heavy training starts
+      // Let the inline panel render before heavy training starts.
       await new Promise(resolve => setTimeout(resolve, 50));
       await trainModel();
       // training.js should call window.reportTrainingProgress / window.trainingFinished
@@ -493,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('predictImgBtn').addEventListener('click', () => {
     refreshWorkflowStep('predict');
-    predictImage(preview);
+    predictImage(predictPreview, { overlayEl: predictPreviewOverlay });
   });
   
   document.getElementById('startWebcamBtn').addEventListener('click', startWebcam);
@@ -642,8 +743,9 @@ document.addEventListener('DOMContentLoaded', () => {
     store.classes = []; store.nextClassId = 0;
     store.modelTrained = false;
     const qb = document.getElementById('qualityBody');
-    if (qb) qb.innerHTML = '<div class="qd-empty">Collect samples to see quality analysis here.</div>';
+    if (qb) qb.innerHTML = '<div class="qd-empty">Collect samples to see dataset quality insights here.</div>';
     preview.style.display = 'none'; preview.src = '';
+    clearPredictionUpload();
     if (openStudioBtn) openStudioBtn.disabled = true;
     const datasetStudio = document.getElementById('datasetStudio');
     if (datasetStudio) datasetStudio.style.display = 'none';
@@ -672,14 +774,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Feature Specific Handlers ──────────────────────────────────
 
-  document.getElementById('internalsToggleBtn').addEventListener('click', toggleInternals);
-
   const replayUseUpload = document.getElementById('replayUseUpload');
   if (replayUseUpload) {
     replayUseUpload.addEventListener('click', async () => {
-      if (!preview.src || !preview.naturalWidth) return;
-      await setReplaySource(preview, 'uploaded image');
-      document.getElementById('replayThumb').src = preview.src;
+      if (!hasPredictionImage()) return;
+      await setReplaySource(predictPreview, 'prediction image');
+      document.getElementById('replayThumb').src = predictPreview.src;
     });
   }
 

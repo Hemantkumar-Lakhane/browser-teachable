@@ -63,18 +63,21 @@ export function updateWhyBox(probs, embData, winnerIdx) {
 
 // ── Image & Live Predictions ─────────────────────────────────────
 
-export async function predictImage(previewEl) {
+export async function predictImage(previewEl, options = {}) {
   if (!store.modelTrained) return setStatus('Train the model first.', 'error');
-  if (!previewEl.src || !previewEl.naturalWidth) return setStatus('Upload an image first.', 'error');
+  if (!previewEl || !previewEl.src || !previewEl.naturalWidth) return setStatus('Upload an image first.', 'error');
   const emb  = extractEmbedding(previewEl);
   const pred = store.classifier.predict(emb);
-  const p    = await pred.data();
+  const [p, embData] = await Promise.all([pred.data(), emb.data()]);
   emb.dispose(); pred.dispose();
-  showPrediction(p);
+  showPrediction(p, embData);
+
+  const whyBox = document.getElementById('whyBox');
+  if (whyBox) whyBox.style.display = 'block';
   
   // XAI logic
   const xaiToggle = document.getElementById('xaiToggle');
-  const overlay = document.getElementById('previewOverlay');
+  const overlay = options.overlayEl || document.getElementById('previewOverlay');
   if (xaiToggle && xaiToggle.checked) {
     const maxI = Array.from(p).indexOf(Math.max(...p));
     setStatus('🧠 Generating XAI Explainability...', 'ready');
@@ -92,11 +95,11 @@ export async function predictImage(previewEl) {
       overlay.src = xaiResult.overlayDataURL;
       overlay.style.display = 'block';
     }
-    const whyBox = document.getElementById('whyBox');
     if (whyBox) whyBox.innerHTML += `<br><br><b>XAI Analysis:</b> ${xaiResult.summaryText}`;
     setStatus('✅ Prediction complete.', 'ready');
   } else if (overlay) {
     overlay.style.display = 'none';
+    setStatus('✅ Prediction complete.', 'ready');
   }
 }
 

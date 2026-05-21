@@ -171,11 +171,11 @@
     <!-- Sample Quality Dashboard -->
     <div class="card" id="quality-card">
       <div class="card-title">
-        🔍 Sample Quality
-        <span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;margin-left:4px;">— diversity &amp; recommendations</span>
+        🔍 Dataset Quality Overview
+        <span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;margin-left:4px;">— compact insights</span>
       </div>
       <div id="qualityBody">
-        <div class="qd-empty">Collect samples to see quality analysis here.</div>
+        <div class="qd-empty">Collect samples to see dataset quality insights here.</div>
       </div>
     </div>
 
@@ -231,6 +231,29 @@
       <div id="varianceWarn" style="display:none;margin-top:10px;padding:10px 12px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;font-size:0.78rem;color:#856404;line-height:1.5;"></div>
       <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
       <div id="trainLog">—</div>
+
+      <div id="trainingPanel" class="training-panel" style="display:none;">
+        <div class="training-panel-head">
+          <div>
+            <div class="panel-kicker">Training Progress</div>
+            <h3>Training in progress</h3>
+          </div>
+          <div class="training-eta" id="trainingEta">—</div>
+        </div>
+        <div class="training-status" id="trainingStatusText">Preparing training…</div>
+        <div class="training-progress-track">
+          <div id="trainingProgressBar"></div>
+        </div>
+        <div class="training-mini-charts">
+          <canvas id="trainingLossMini" width="240" height="80"></canvas>
+          <canvas id="trainingAccMini" width="160" height="80"></canvas>
+        </div>
+        <div id="trainingRunLog" class="training-run-log">Logs will appear here.</div>
+        <div class="training-panel-actions">
+          <button class="btn btn-red" id="trainingCancelBtn">⏹ Stop Training</button>
+          <button class="btn btn-outline" id="trainingCloseBtn" style="display:none;">Hide Details</button>
+        </div>
+      </div>
       
       <!-- Model Persistence -->
       <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 16px; display: flex; gap: 8px;">
@@ -256,16 +279,61 @@
       <div class="card-title">
         🎯 Prediction <span class="step-badge">STEP 4</span>
       </div>
+      <div class="prediction-input-heading">
+        <div>
+          <h3>Prediction Input Methods</h3>
+          <p>Choose a trained-model test source.</p>
+        </div>
+      </div>
+      <div class="prediction-methods">
+        <section class="prediction-method prediction-method-primary" aria-labelledby="predictUploadTitle">
+          <div class="prediction-method-head">
+            <div>
+              <h4 id="predictUploadTitle">Upload Image</h4>
+              <p>Drag, drop, or browse for a single test image.</p>
+            </div>
+            <span class="method-badge">Primary</span>
+          </div>
+          <div class="predict-upload-area" id="predictUploadDropzone" role="button" tabindex="0" aria-label="Upload image to predict">
+            <div class="predict-upload-icon">🖼</div>
+            <strong>Drag &amp; Drop Image Here</strong>
+            <span>or click to upload</span>
+            <button class="btn btn-primary btn-sm" id="predictUploadBtn" type="button">Upload Image</button>
+          </div>
+          <input type="file" id="predictImageUpload" accept="image/*">
+          <div class="predict-preview-wrap" id="predictPreviewWrap">
+            <img id="predictPreview" alt="Prediction test preview">
+            <img id="predictPreviewOverlay" alt="">
+          </div>
+          <div class="predict-upload-status" id="predictUploadStatus">No prediction image selected.</div>
+          <button class="btn btn-green predict-action-btn" id="predictImgBtn" type="button" disabled>🔍 Predict Uploaded Image</button>
+        </section>
+
+        <section class="prediction-method" aria-labelledby="predictWebcamTitle">
+          <div class="prediction-method-head">
+            <div>
+              <h4 id="predictWebcamTitle">Live Webcam</h4>
+              <p>Run continuous prediction from the camera feed.</p>
+            </div>
+          </div>
+          <div class="webcam-predict-panel">
+            <div class="webcam-predict-icon">📷</div>
+            <div>
+              <strong>Use Live Webcam</strong>
+              <span>Start the camera in data collection, then begin live prediction.</span>
+            </div>
+          </div>
+          <div class="live-row">
+            <button class="btn btn-primary" id="startLiveBtn" disabled>▶ Start Live</button>
+            <button class="btn btn-stop" id="stopLiveBtn" disabled>⏹ Stop</button>
+          </div>
+        </section>
+      </div>
       <div id="predBars">
         <div style="font-size:0.82rem;color:#a0aec0;">Train the model first, then predict here.</div>
       </div>
       <div id="predWinner"></div>
       <div id="whyBox" style="margin-top:8px;padding:9px 12px;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:0.8rem;color:#4a5568;line-height:1.6;min-height:0;display:none;"></div>
-      <div class="live-row">
-        <button class="btn btn-green" id="predictImgBtn" disabled>🔍 Predict Image</button>
-        <button class="btn btn-primary" id="startLiveBtn" disabled>▶ Start Live</button>
-        <button class="btn btn-stop" id="stopLiveBtn" disabled>⏹ Stop</button>
-      </div>
       <div style="margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
         <input type="checkbox" id="xaiToggle" style="accent-color:#8b5cf6; width:16px; height:16px; cursor:pointer;" disabled>
         <label for="xaiToggle" style="font-size: 0.85rem; color:#475569; font-weight:600; cursor:pointer; user-select:none;">👁️ Enable Explainable AI (XAI Heatmap)</label>
@@ -339,9 +407,9 @@
       <div class="replay-source-row">
         <img id="replayThumb" alt="test image"/>
         <div class="replay-source-info" id="replaySourceInfo">
-          No test image selected. Upload an image above, then click "Use Uploaded Image".
+          No test image selected. Upload a prediction image above, then click "Use Prediction Image".
         </div>
-        <button class="btn btn-outline btn-sm" id="replayUseUpload" disabled>🖼 Use Uploaded Image</button>
+        <button class="btn btn-outline btn-sm" id="replayUseUpload" disabled>🖼 Use Prediction Image</button>
         <button class="btn btn-outline btn-sm" id="replaySnap" disabled>📷 Snap Webcam</button>
       </div>
 
@@ -423,95 +491,6 @@
     <div id="arch-card">
       <h3>🧱 Network Architecture &nbsp;<span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;">— what's inside your classifier</span></h3>
       <div id="arch-svg"></div>
-    </div>
-
-    <!-- MobileNet Internals Visualiser -->
-    <div id="internals-card">
-      <h3 id="internalsToggleBtn">
-        🧬 MobileNet Internals
-        <span style="font-size:0.68rem;color:#a0aec0;font-weight:400;text-transform:none;">— inside the frozen feature extractor</span>
-        <span class="internals-toggle" id="internalsToggleLabel">▼ expand</span>
-      </h3>
-
-      <div id="internals-body" style="display:none;">
-        <div class="internals-subtitle">
-          Watch how MobileNet transforms your image through 28 layers — from raw pixels to abstract 1024D features.
-          Each panel shows the <b>mean channel activation</b> at that layer depth. 
-          <span style="color:#667eea;">Blue = low activation</span> · <span style="color:#f56565;">Red = high activation</span>
-        </div>
-
-        <div class="internals-flow">
-
-          <!-- Stage 1: Early conv — edges -->
-          <div class="int-stage" id="int-stage-1">
-            <div class="int-stage-label">① Early Conv</div>
-            <div class="int-stage-layer" id="int-layer-1">conv_pw_1_relu</div>
-            <canvas class="int-canvas" id="int-canvas-1" width="80" height="80"></canvas>
-            <div class="int-badge" id="int-badge-1">32ch · 112×112</div>
-            <div class="int-stage-desc">Detects <b>edges</b>, corners &amp; colour gradients — the most basic features</div>
-          </div>
-
-          <!-- Stage 2: Mid-early — textures -->
-          <div class="int-stage" id="int-stage-2">
-            <div class="int-stage-label">② Mid Conv</div>
-            <div class="int-stage-layer" id="int-layer-2">conv_pw_5_relu</div>
-            <canvas class="int-canvas" id="int-canvas-2" width="80" height="80"></canvas>
-            <div class="int-badge" id="int-badge-2">128ch · 28×28</div>
-            <div class="int-stage-desc">Detects <b>textures</b> — skin, fabric, patterns, surfaces</div>
-          </div>
-
-          <!-- Stage 3: Deep — object parts -->
-          <div class="int-stage" id="int-stage-3">
-            <div class="int-stage-label">③ Deep Conv</div>
-            <div class="int-stage-layer" id="int-layer-3">conv_pw_9_relu</div>
-            <canvas class="int-canvas" id="int-canvas-3" width="80" height="80"></canvas>
-            <div class="int-badge" id="int-badge-3">256ch · 14×14</div>
-            <div class="int-stage-desc">Detects <b>object parts</b> — faces, hands, wheels, edges of objects</div>
-          </div>
-
-          <!-- Stage 4: Last conv — spatial attention map -->
-          <div class="int-stage" id="int-stage-4">
-            <div class="int-stage-label">④ Last Conv</div>
-            <div class="int-stage-layer" id="int-layer-4">conv_pw_13_relu</div>
-            <canvas class="int-canvas" id="int-canvas-4" width="80" height="80"></canvas>
-            <div class="int-badge" id="int-badge-4">1024ch · 7×7</div>
-            <div class="int-stage-desc">Detects <b>whole objects</b> — collapses to the 1024D embedding via global avg pool</div>
-          </div>
-
-        </div>
-
-        <!-- Live insight row -->
-        <div id="internalsInsight">
-          Start Live Prediction — this panel will show what MobileNet activates at each depth of the network in real time.
-        </div>
-      </div>
-    </div>
-
-    <!-- Training Progress Modal -->
-    <div id="trainingModal" style="display:none; position:fixed; inset:0; background:rgba(2,6,23,0.6); align-items:center; justify-content:center; z-index:1200;">
-      <div style="width:520px; max-width:94%; background:white; border-radius:10px; padding:16px; box-shadow:0 10px 30px rgba(2,6,23,0.4);">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <h3 style="margin:0;">🏋️ Training in progress</h3>
-          <div style="margin-left:auto; font-size:0.85rem; color:#64748b;" id="trainingEta">—</div>
-        </div>
-        <div style="margin-top:12px; font-size:0.9rem; color:#475569;" id="trainingStatusText">Preparing training…</div>
-        <div style="height:12px; background:#f1f5f9; border-radius:8px; margin-top:12px; overflow:hidden;">
-          <div id="trainingProgressBar" style="height:12px; background:linear-gradient(90deg,#60a5fa,#7c3aed); width:0%;"></div>
-        </div>
-        <div style="display:flex; gap:12px; margin-top:12px; align-items:flex-start;">
-          <div style="flex:1;">
-            <canvas id="trainingLossMini" width="240" height="80" style="border:1px solid #eef2ff; border-radius:6px;"></canvas>
-          </div>
-          <div style="width:160px;">
-            <canvas id="trainingAccMini" width="160" height="80" style="border:1px solid #eef2ff; border-radius:6px;"></canvas>
-          </div>
-        </div>
-        <div id="trainingLog" style="margin-top:12px; max-height:120px; overflow:auto; background:#fbfdff; border:1px solid #e6edf8; padding:8px; border-radius:6px; font-size:0.82rem; color:#334155;">Logs will appear here.</div>
-        <div style="display:flex; gap:8px; margin-top:12px;">
-          <button class="btn btn-red" id="trainingCancelBtn">⏹ Stop Training</button>
-          <button class="btn btn-outline" id="trainingCloseBtn" style="margin-left:auto; display:none;">Close</button>
-        </div>
-      </div>
     </div>
 
     <!-- Embedding distance -->

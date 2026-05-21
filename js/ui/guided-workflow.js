@@ -3,9 +3,9 @@ const TRANSITION_MS = 260;
 
 const STEP_PANEL_IDS = {
   upload: ['uploadCard', 'webcamCard'],
-  label: ['labelCard', 'quality-card', 'dist-card'],
+  label: ['labelCard', 'dist-card', 'quality-card'],
   train: ['trainCard', 'charts-row'],
-  predict: ['predictCard', 'timeline-card', 'inspector-card', 'replay-card', 'eval-card', 'arch-card', 'internals-card']
+  predict: ['predictCard', 'timeline-card', 'inspector-card', 'replay-card', 'eval-card', 'arch-card']
 };
 
 let currentStep = 'upload';

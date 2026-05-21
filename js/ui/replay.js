@@ -17,7 +17,7 @@ export function initReplayCard() {
   const replayUseUpload = document.getElementById('replayUseUpload');
   const replaySnap = document.getElementById('replaySnap');
   const replayInsight = document.getElementById('replayInsight');
-  const preview = document.getElementById('preview');
+  const preview = document.getElementById('predictPreview');
 
   if (!store.epochSnapshots.length || !replayCard) return;
   replayCard.style.display = 'block';
@@ -156,10 +156,10 @@ export function restoreFinalWeights() {
 export function syncReplayButtons() {
   const replayUseUpload = document.getElementById('replayUseUpload');
   const replaySnap = document.getElementById('replaySnap');
-  const preview = document.getElementById('preview');
+  const preview = document.getElementById('predictPreview');
   
   if (replayUseUpload)
-    replayUseUpload.disabled = !(preview && preview.src && preview.naturalWidth > 0);
+    replayUseUpload.disabled = !(store.epochSnapshots.length && preview && preview.src && preview.naturalWidth > 0);
   if (replaySnap)
     replaySnap.disabled = !store.webcamReady;
 }
