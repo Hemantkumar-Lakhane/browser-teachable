@@ -4,78 +4,78 @@
 
 ---
 
-## 👤 Member 1: Core AI Engine & Admin Training Lab
-**Role Summary:** Member 1 is the "Lead Machine Learning Engineer." They built the core application that loads the baseline AI (TensorFlow MobileNet) and created the administrative interface (`index.html`) that allows users to create classification classes and collect training datasets.
+## 👤 Member 1: Core AI Engine & Training Configurator
+**Role Summary:** Member 1 is the "Lead Machine Learning Engineer." They built the core application that loads the baseline AI models and created the training infrastructure to allow custom classification.
 
 ### 📂 Code Related Files
-* `js/ml/mobilenet.js` & `js/ml/dataset.js`
-* `js/ui/classes.js` & `js/ml/training.js`
-* `index.html` (Admin Layout)
+* `js/ml/backbone.js` & `js/ml/dataset.js`
+* `js/ml/training.js` & `js/ui/classes.js`
 
 ### ⚙️ Functionality Explained Simply
-* **`loadMobileNet()` & Training Loop:** Initializes the 1024-Dimension neural network. They wrote the code that trains a custom classification layer using the Adam optimizer across user-defined epochs.
-* **`buildClassifier()`:** Builds the dynamic dense-layer "mini-brain" on top of MobileNet to categorize custom images.
-* **Data Quality Dashboard:** Built the variance safety checks and thumbnail previews so that bad data doesn't corrupt the training cycle.
+* **Backbone Integration:** Implemented the logic to load and switch between MobileNet v1/v2, ResNet50, and EfficientNet feature extractors natively in the browser.
+* **Hyperparameter Tuning:** Developed the dynamic dense-layer "mini-brain" and allowed users to configure Optimizers (Adam, SGD), Learning Rates, Epochs, and Batch Sizes visually.
+* **Training Loop:** Managed the TensorFlow.js WebGL-accelerated training cycle and integrated the real-time `Chart.js` loss/accuracy rendering.
 
 ---
 
-## 👤 Member 2: Dataset Labeling Studio & Augmentation Engine
-**Role Summary:** Member 2 is the "Data Engineering Specialist." They were responsible for developing the built-in Dataset Labeling Studio, empowering users to clean and augment data before training.
+## 👤 Member 2: Dataset Pipeline & Cloud Integrations
+**Role Summary:** Member 2 is the "Data Engineering Specialist." They were responsible for developing the dataset sourcing pipelines and the built-in Labeling Studio for data cleaning.
 
 ### 📂 Code Related Files
 * `js/ui/labeling-studio.js`
-* `index.html` (Dataset Studio UI)
-* `css/styles.css` (Grid layouts & Flexbox)
+* `js/main.js` (Cloud Import Logic)
+* `css/styles.css`
 
 ### ⚙️ Functionality Explained Simply
-* **Advanced Visual Filters:** Integrated sliders for Brightness, Contrast, Grayscale, Blur, and Binarization using CSS hardware-accelerated rendering.
-* **Spatial Transforms:** Wrote the Canvas geometry logic for drag-and-drop bounding box cropping and image rotation.
-* **Data Augmentation:** Developed the "Save as Copy" workflow, allowing synthetic dataset multiplication directly in the browser to prevent model overfitting.
+* **Cloud Dataset Importer:** Integrated `JSZip` to fetch heavy `.zip` dataset files directly from Kaggle and Web URLs into the browser's memory without freezing.
+* **Visual Transformations:** Built the Canvas geometry logic for drag-and-drop bounding box cropping, rotation, and applying CSS hardware-accelerated visual filters.
+* **Auto-Augmentation Engine:** Developed the logic for procedural dataset multiplication to prevent model overfitting.
 
 ---
 
-## 👤 Member 3: Field Portals & Inference Logic
-**Role Summary:** Member 3 is the "Full-Stack Deployment Engineer." They developed the field/testing portals (`agent.html` and `customer-link.html`) stripping away complex ML controls for a clean, operational UI.
+## 👤 Member 3: Professional Evaluation & Explainable AI (XAI)
+**Role Summary:** Member 3 is the "Analytics & Transparency Lead." They handled model validation and built deep visual inspectors to eliminate the AI "black box" effect.
 
 ### 📂 Code Related Files
-* `agent.html` & `customer-link.html`
-* Inline field logic and stream handling
+* `js/visuals/internals.js` & `js/visuals/charts.js`
+* `js/ml/prediction.js`
 
 ### ⚙️ Functionality Explained Simply
-* **WebRTC Live Stream:** Created the logic that hooks into mobile/tablet cameras seamlessly via HTML5.
-* **Real-time Inference Loop:** Managed the `requestAnimationFrame` loop that constantly pings the newly trained AI model for predictions.
-* **Confidence Progress Bars:** Implemented the UI loops to parse the raw array of probabilities and generate real-time visual progress bars.
+* **Enterprise Validation:** Wrote the mathematical logic to compute real-time Confusion Matrices, Precision, Recall, and F1-Scores.
+* **PDF Report Generation:** Developed the functionality to export detailed model evaluation reports natively.
+* **XAI Occlusion Heatmaps:** Built the complex algorithm that slides a masking window across images to calculate and paint glowing "heat" maps, proving exactly which physical areas the AI focused on.
 
 ---
 
-## 👤 Member 4: Model Persistence & Storage
-**Role Summary:** Member 4 is the "Database Architect." They built the critical bridge between the ModelForge Studio and external deployments by creating a file-based sharing mechanism.
+## 👤 Member 4: Offline PWA Architecture & Storage
+**Role Summary:** Member 4 is the "Platform Architect." They transformed the web application into a 100% Offline, installable product.
 
 ### 📂 Code Related Files
+* `sw.js` & `manifest.json`
 * `js/ml/persistence.js`
-* Model import logic
+* `js/store.js`
 
 ### ⚙️ Functionality Explained Simply
-* **`exportModel()`:** Intercepts the completed training weights and topological layout and forces the browser to serialize them into `.json` and `.bin` physical files.
-* **Metadata Construction:** Zips up the user-created Class names into a `metadata.json` file so the neural network remembers what text to output.
-* **File Upload Reader:** Built the logic to read multiple files simultaneously, parse the weights, and re-hydrate the TensorFlow layers seamlessly.
+* **Progressive Web App (PWA):** Implemented Service Workers to aggressively cache all system assets (HTML, CSS, JS), enabling the entire AI studio to operate without an internet connection.
+* **IndexedDB Model Persistence:** Replaced basic file downloads with seamless local database storage, allowing users to save and load their trained weights seamlessly across sessions.
+* **Model Serialization:** Built the logic to export neural network topologies into `.json` and `.bin` physical files for external use.
 
 ---
 
-## 👤 Member 5: Security, UI/UX, & Deep Visualizations
-**Role Summary:** Member 5 is the "Frontend & Analytics Lead." They handled authentication routing and built the deep visual inspectors for debugging the AI.
+## 👤 Member 5: Industry Scanners & Field Deployment
+**Role Summary:** Member 5 is the "Deployment Engineer." They developed the isolated, domain-specific testing portals (Scanners) that run the trained models in real-world scenarios.
 
 ### 📂 Code Related Files
-* `login.html`
-* `js/visuals/inspector.js`
-* `js/visuals/internals.js`
+* `agri-scanner.html`, `waste-scanner.html`, `qa-scanner.html`
+* `dynamic-scanner.html` & `customer-link.html`
+* `js/ui/webcam.js`
 
 ### ⚙️ Functionality Explained Simply
-* **Enterprise Login Gateway:** Designed the secure `login.html` wall that routes users to different workspaces based on their credentials.
-* **Live Pipeline Inspector:** Created the 5-panel X-Ray view in the Studio so the team could debug *why* the AI made a decision, drawing heatmaps and tensor graphs.
-* **Activation Attention Mapping:** Developed the logic that paints a glowing "heat" map over images to show which physical area the computer was focusing on during prediction.
+* **Pre-built Industry Scanners:** Designed and coded the isolated deployment UIs tailored for Agriculture (Crop Disease), Manufacturing (QA Check), and Environmental (Waste Sorting) use cases.
+* **Dynamic Webcam Inference:** Managed the `requestAnimationFrame` loops that constantly ping the trained AI model against live webcam feeds for zero-latency predictions.
+* **Client Intake Portal:** Developed the lightweight URL generation logic that allows clients to test models instantly via a clean, stripped-down interface.
 
 ---
 
 ### 🎓 Summary for Presentation
-> *"Our project transitioned from a basic tech-demo into **ModelForge AI Studio**, a professional, zero-latency Edge AI platform. We divided the work functionally: The Core ML Engine (Training), The Preprocessing Pipeline (Labeling Studio & Augmentation), Field Deployment (Agent Portals), Model Persistence (Export/Import), and Analytics/UX. This architecture strictly separates the backend mathematics from data engineering and frontend usability, perfectly replicating a real-world MLOps software lifecycle."*
+> *"Our project transitioned from a basic tech-demo into **ModelForge AI Studio**, a professional, zero-latency Edge AI platform. We divided the work functionally among 5 domains: Core ML & Hyperparameters, Cloud Data Pipelines, Pro Evaluation & XAI, PWA Offline Architecture, and Industry Scanners. This distribution perfectly replicates a real-world MLOps lifecycle—from cloud data ingestion to offline edge deployment."*

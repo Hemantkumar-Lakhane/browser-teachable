@@ -1,6 +1,6 @@
 <div align="center">
   <h1>⚒️ ModelForge AI Studio</h1>
-  <p>An advanced, browser-based Edge AI platform for dataset preprocessing, training, and zero-latency inference.</p>
+  <p>An advanced, 100% offline Progressive Web App (PWA) for dataset preprocessing, training, and zero-latency Edge AI inference.</p>
 </div>
 
 <br>
@@ -32,14 +32,15 @@ ModelForge natively integrates algorithmic transparency, a crucial feature for e
 * **Occlusion Sensitivity Mapping:** The client-side XAI engine slides a masking window across the live inference stream, mathematically calculating which precise pixel clusters trigger the neural network's decision.
 * **High-Fidelity Visual Overlays:** Generates a real-time, color-coded heatmap over the webcam feed or uploaded image, proving *why* the AI made its prediction.
 
-### 3️⃣ Zero-Config Edge Training
-* **Transfer Learning:** Train a custom Dense layer atop the frozen MobileNet baseline directly in your browser.
-* **Real-time Monitoring:** Watch loss and accuracy metrics converge in real-time via interactive charts.
-* **Model Export:** Export the resulting Weights and JSON Topology directly to your local file system for deployment in any JS/Node environment.
+### 3️⃣ Cloud Integrations & Offline PWA
+* **Direct Cloud Import:** Utilizes `JSZip` to fetch and extract massive `.zip` datasets directly from Kaggle and Web URLs into the browser's RAM, bypassing local downloads.
+* **100% Offline Capability:** Built as a Progressive Web App (PWA) using Service Workers, allowing the entire AI studio to run flawlessly without an internet connection.
 
-### 3️⃣ Live Inference & Testing
-* Test your newly trained model instantly using webcam feeds or file uploads.
-* View class confidence distribution arrays and embedding distances in real-time.
+### 4️⃣ Advanced Training & Pro Evaluation
+* **Hyperparameter Tuning:** Visually configure Optimizers (Adam, SGD), Learning Rates, and Batch Sizes for professional-grade training.
+* **Multiple Backbones:** Native support for MobileNet v1/v2, ResNet50, and EfficientNet feature extractors.
+* **Professional Metrics:** Automatically generate Confusion Matrices, Precision, Recall, and F1-Scores for enterprise validation.
+* **Industry Scanners:** Instantly deploy trained models into pre-built, domain-specific scanner UIs (Agriculture, QA, Waste Sorting).
 
 ---
 
