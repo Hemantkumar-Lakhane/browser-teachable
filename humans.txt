@@ -1,0 +1,15 @@
+/* TEAM */
+  Developer: Hemant
+  Contact: github.com/DevBolt07
+  Location: Earth
+
+/* SITE */
+  Last update: 2026/06/07
+  Language: English
+  Doctype: HTML5
+  IDE: VS Code, WebStorm
+
+/* TECH STACK */
+  HTML5, CSS3, JavaScript (ES6+)
+  TensorFlow.js
+  MobileNet v1/v2
