@@ -1,5 +1,10 @@
 <div align="center">
   <h1>⚒️ ModelForge AI Studio</h1>
+  <p>
+    <img alt="GitHub License" src="https://img.shields.io/github/license/DevBolt07/browser-teachable?style=for-the-badge&color=blue">
+    <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge">
+    <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/DevBolt07/browser-teachable?style=for-the-badge">
+  </p>
   <p>An advanced, 100% offline Progressive Web App (PWA) for dataset preprocessing, training, and zero-latency Edge AI inference.</p>
 </div>
 
