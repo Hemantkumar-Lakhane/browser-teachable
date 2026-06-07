@@ -1,17 +1,8 @@
-/_ ═══════════════════════════════════════════════════════════════
-Integration Guide: Workflow Engine with Existing ML Code
-═══════════════════════════════════════════════════════════════ _/
+# Integration Guide: Workflow Engine with Existing ML Code
 
-/\*\*
+This guide shows how to connect the new workflow UI with your existing ML training, prediction, and data handling code.
 
-- STEP-BY-STEP INTEGRATION INSTRUCTIONS
--
-- This guide shows how to connect the new workflow UI with your
-- existing ML training, prediction, and data handling code.
-  \*/
-
-// ── 1. IMPORT WORKFLOW ENGINE IN main.js ────────────────────────
-
+```javascript
 import { workflowEngine } from './js/ui/workflow-engine.js';
 
 // ── 2. CONNECT STEP 1 (Create Project) ────────────────────────────
@@ -401,25 +392,22 @@ document.addEventListener('change', saveWorkflowProgress);
 // Save on unload
 window.addEventListener('beforeunload', saveWorkflowProgress);
 
-/\*\*
+```
 
-- ════════════════════════════════════════════════════════════════
-- KEY INTEGRATION POINTS
-- ════════════════════════════════════════════════════════════════
--
-- 1.  workflowEngine.goToStep(n) → Navigate to step n
-- 2.  workflowEngine.completeStep(n) → Mark step as complete
-- 3.  workflowEngine.nextStep() → Advance to next step
-- 4.  workflowEngine.previousStep() → Go back one step
-- 5.  workflowEngine.reset() → Start over
-- 6.  workflowEngine.getProgress() → Get completion percentage
--
-- Connect these to your existing ML functions:
-- - addSampleFromImage()
-- - trainModel()
-- - predictImage()
-- - exportModel()
-- - importModel()
--
-- Update store observers for reactive UI updates
-  \*/
+## Key Integration Points
+
+1. `workflowEngine.goToStep(n)` → Navigate to step n
+2. `workflowEngine.completeStep(n)` → Mark step as complete
+3. `workflowEngine.nextStep()` → Advance to next step
+4. `workflowEngine.previousStep()` → Go back one step
+5. `workflowEngine.reset()` → Start over
+6. `workflowEngine.getProgress()` → Get completion percentage
+
+Connect these to your existing ML functions:
+- `addSampleFromImage()`
+- `trainModel()`
+- `predictImage()`
+- `exportModel()`
+- `importModel()`
+
+Update store observers for reactive UI updates.
