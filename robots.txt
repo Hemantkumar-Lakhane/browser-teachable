@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://devbolt07.github.io/browser-teachable/sitemap.xml
