@@ -673,8 +673,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="flex:1; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
             <h3 style="margin-top:0; color:#334155; font-size:16px;">Model Performance</h3>
             <ul style="padding-left:20px; font-size:14px; margin-bottom:0;">
-              <li><b>Final Accuracy:</b> ${accVal}%</li>
+              <li><b>Final Training Accuracy:</b> ${accVal}%</li>
+              <li><b>Evaluation Accuracy (CM):</b> ${(store.evaluationMetrics.evalAccuracy * 100 || 0).toFixed(1)}%</li>
               <li><b>Architecture:</b> ${(store.backbone?.label || 'MobileNet v1')} + Dense Classifier</li>
+              <li><b>Macro Precision:</b> ${(store.evaluationMetrics.macroPrecision * 100 || 0).toFixed(1)}%</li>
+              <li><b>Macro Recall:</b> ${(store.evaluationMetrics.macroRecall * 100 || 0).toFixed(1)}%</li>
+              <li><b>Macro F1-Score:</b> ${(store.evaluationMetrics.macroF1 * 100 || 0).toFixed(1)}%</li>
+              <li><b>Avg. Training Time/Epoch:</b> ${(store.evaluationMetrics.avgTrainingTimePerEpoch || 0).toFixed(0)} ms (Steady: ${(store.evaluationMetrics.steadyAvgTrainingTimePerEpoch || 0).toFixed(0)} ms)</li>
+              <li><b>Inference Latency:</b> ${(store.evaluationMetrics.avgInferenceLatency || 0).toFixed(1)} ms / frame</li>
+              <li><b>Exported Model Size (ZIP):</b> ${(store.evaluationMetrics.modelZipSizeMB || 0).toFixed(2)} MB</li>
             </ul>
           </div>
         </div>

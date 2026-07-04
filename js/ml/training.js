@@ -121,6 +121,9 @@ export async function trainModel() {
       shuffle: true,
       validationSplit: xs.shape[0] >= 10 ? 0.1 : 0,
       callbacks: {
+        onEpochBegin: function(epoch, logs) {
+          this.epochStartTime = performance.now();
+        },
         onBatchEnd: async function(batch, logs) {
           if (window.__trainingCancelled) {
             if (this?.model) this.model.stopTraining = true;
@@ -136,6 +139,7 @@ export async function trainModel() {
             if (this?.model) this.model.stopTraining = true;
             else if (store.classifier) store.classifier.stopTraining = true;
           }
+          const epochDuration = performance.now() - this.epochStartTime;
           const pct = ((epoch+1)/epochs*100).toFixed(0);
           const acc = logs.acc ?? logs.accuracy ?? 0;
           progressBar.style.width = pct + '%';
@@ -162,6 +166,7 @@ export async function trainModel() {
             epoch: epoch + 1,
             loss:  logs.loss,
             acc:   acc,
+            duration: epochDuration,
             weights: store.classifier.getWeights().map(w => {
               const arr = w.dataSync();
               const copy = new Float32Array(arr);
@@ -175,6 +180,19 @@ export async function trainModel() {
 
     if (window.__trainingCancelled) {
       throw new Error('Training cancelled by user.');
+    }
+
+    // Calculate training time metrics
+    if (store.epochSnapshots.length > 0) {
+      const totalDuration = store.epochSnapshots.reduce((sum, snap) => sum + snap.duration, 0);
+      store.evaluationMetrics.avgTrainingTimePerEpoch = totalDuration / store.epochSnapshots.length;
+      
+      if (store.epochSnapshots.length > 1) {
+        const steadyDuration = totalDuration - store.epochSnapshots[0].duration;
+        store.evaluationMetrics.steadyAvgTrainingTimePerEpoch = steadyDuration / (store.epochSnapshots.length - 1);
+      } else {
+        store.evaluationMetrics.steadyAvgTrainingTimePerEpoch = store.evaluationMetrics.avgTrainingTimePerEpoch;
+      }
     }
 
     store.modelTrained = true;

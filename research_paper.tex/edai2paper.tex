@@ -1,333 +1,232 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
+
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{array}
 
-\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
-    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
 
 \begin{document}
 
-\title{ModelForge AI Studio: A Browser-Native No-Code Platform for Transfer-Learning-Based Edge Image Classification}
+\title{ModelForge AI Studio: A Browser-Native No-Code Platform for Transfer-Learning-Based Edge Image Classification and Deployment}
 
-\author{
-\IEEEauthorblockN{Varsha Dange}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-varsha.dange1@vit.edu}
-\and
-\IEEEauthorblockN{Tanmay Kumbhare}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-tanmay.kumbhare24@vit.edu}
-\and
-\IEEEauthorblockN{Kasturi Rasekar}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-rasekar.kasturi24@vit.edu}
-\and
-\IEEEauthorblockN{Hemantkumar S. Lakhane}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-hemantkumar.lakhane24@vit.edu}
-\and
-\IEEEauthorblockN{Dhanashri Khode}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-dhanashri.khode24@vit.edu}
-\and
-\IEEEauthorblockN{Yash Lakhe}
-\IEEEauthorblockA{\textit{Department of Artificial Intelligence and Machine Learning} \\
-\textit{Vishwakarma Institute of Technology} \\
-Pune, India \\
-yash.lakhe24@vit.edu}
+\author{\IEEEauthorblockN{Varsha Dange, Tanmay Kumbhare, Kasturi Rasekar, Hemantkumar S. Lakhane, Dhanashri Khode, and Yash Lakhe}
+\IEEEauthorblockA{Department of Artificial Intelligence and Machine Learning \\
+Vishwakarma Institute of Technology\\
+Pune, India\\
+\{varsha.dange1, tanmay.kumbhare24, rasekar.kasturi24, hemantkumar.lakhane24, yash.lakhe24, dhanashri.khode24\}@vit.edu}
 }
 
 \maketitle
 
 \begin{abstract}
-The democratization of artificial intelligence relies heavily on accessible tooling that bridges the gap between complex neural architectures and non-expert developers. Traditional machine learning workflows demand substantial coding expertise, complex environment configurations, and access to significant cloud computing resources. To address these barriers, we present ModelForge AI Studio, a browser-oriented, no-code machine learning workspace tailored for image classification. Beyond generating classifiers, ModelForge implements an integrated transparency layer---encompassing stage-wise pipeline introspection, embedding-guided dataset assessment, epoch replay, and occlusion-sensitivity heatmaps---to foster pedagogical explainability. Leveraging TensorFlow.js and MobileNet-based transfer learning, the platform facilitates human-verified dataset refinement through dynamic labeling and multi-level data augmentation. By relocating the computational workload to the client edge via WebGL acceleration, the architecture adopts a resource-aware design that supports a privacy-preserving local workflow and reduces cloud dependency for training and inference. This paper details the system architecture, mathematical formulations, and a formal evaluation protocol for ModelForge AI Studio, positioning it as an accessible and interpretable edge AI solution.
+The technical barrier to entry in machine learning prevents domain experts from building custom classification models. We present ModelForge AI Studio, a fully browser-native, no-code platform for edge image classification. The system executes data ingestion, dataset editing, augmentation, transfer learning, evaluation, and model export entirely within the client browser using TensorFlow.js and WebGL. It eliminates server dependencies and ensures data privacy by keeping all images and weights on the local device. The platform features an integrated layer for Explainable AI, providing step-by-step visualization of the inference pipeline, occlusion heatmaps, and epoch replay. We demonstrate a portable deployment workflow that exports trained models directly into five industry-specific templates covering agriculture, insurance, manufacturing, waste management, and general classification. ModelForge differentiates itself from existing web-based tools by offering user-configurable hyperparameters, manual review for synthetic data augmentation, and comprehensive validation reporting.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Edge AI, Transfer Learning, No-Code Machine Learning, TensorFlow.js, Explainable AI, MobileNet, Browser-Based Inference.
+Edge Computing, Browser Machine Learning, Transfer Learning, Explainable AI, No-Code Platforms
 \end{IEEEkeywords}
 
 \section{Introduction}
 
-The rapid advancement of deep learning has revolutionized computer vision, enabling breakthroughs in object recognition, medical imaging, and autonomous systems. However, a significant barrier to entry persists: training state-of-the-art models traditionally requires advanced programming skills, specialized hardware, and complex software dependencies. This technical overhead limits the participation of domain experts, educators, and hobbyists who lack specialized knowledge in data science but possess valuable domain-specific insights.
+The barrier to entry in machine learning remains remarkably high for domain experts. Non-experts such as farmers, insurance assessors, factory engineers, and educators possess valuable domain knowledge but cannot build custom machine learning models. Traditional machine learning workflows require programming skills, specialized hardware accelerators, and complex software dependencies that fall outside the expertise of these professionals \cite{Carney2020}. 
 
-Furthermore, conventional machine learning (ML) paradigms are predominantly cloud-centric. Data is transmitted to centralized servers for processing, raising significant privacy concerns and latency bottlenecks. For applications involving sensitive or proprietary image data, routing datasets through external networks is often unacceptable. Edge computing has emerged as a compelling alternative, processing data closer to its source. The modern web browser, equipped with hardware-accelerated graphics processing capabilities (WebGL) and optimized JavaScript engines, represents a ubiquitous and powerful edge execution environment.
+Cloud-based machine learning platforms create a secondary problem regarding data privacy. Sensitive images from medical facilities, factory floors, or insurance claims cannot be safely routed through external corporate servers. Edge computing addresses this privacy concern by processing data locally, but existing edge tools still require software installation and technical environment setup \cite{Lian2021}.
 
-We introduce \textit{ModelForge AI Studio}, a decentralized, browser-native no-code platform designed to democratize image classification. Built on TensorFlow.js, the workspace abstracts the complexities of the ML pipeline while maintaining rigorous performance. Users can visually upload datasets, apply dynamic preprocessing and augmentation, and train custom classifiers using transfer learning via a pre-trained MobileNet backbone. Because training images are not uploaded to an application server during the local workflow, the platform supports a privacy-preserving local workflow and reduces cloud dependency for training and inference.
+We introduce ModelForge AI Studio to solve both the technical and privacy barriers simultaneously. The platform runs entirely in the modern web browser and requires no coding, no software installation, and no backend server. Users can upload images, label them, train a classifier, review what the model learned, and deploy it seamlessly within a single browser tab \cite{Smilkov2019}. We provide five industry deployment templates to demonstrate the immediate real-world applicability of these exported models.
 
-Unlike some existing no-code tools that function as opaque black boxes, ModelForge AI Studio emphasizes an integrated transparency layer. The platform provides occlusion-sensitivity heatmaps, real-time confusion matrices, a comprehensive pipeline inspector, and embedding distance analysis, allowing users to visually interrogate network decisions and understand feature representations. By bridging the gap between no-code accessibility and deep technical insight, this work presents a practical framework for pedagogical and edge ML deployment.
+The primary contributions of this paper are:
+\begin{enumerate}
+    \item A fully browser-native no-code machine learning pipeline from data ingestion to model deployment with zero server dependency.
+    \item An augmentation system with manual per-variant review and acceptance to ensure data quality.
+    \item An integrated Explainable AI layer including pipeline inspection, occlusion heatmaps with focus categorization, epoch replay with weight restoration, and embedding separability analysis.
+    \item A portable model export mechanism and five industry-specific deployment templates covering agriculture, insurance, manufacturing, waste management, and general use.
+\end{enumerate}
 
-As illustrated in Fig. \ref{fig:architecture}, the ModelForge architecture is fully browser-native and client-side. Data enters through user uploads or a live webcam, and is subsequently processed via a dynamic labeling studio, preprocessing, and multi-level augmentation. Following MobileNet embedding extraction and classifier training, the system integrates evaluation and XAI before culminating in a TFJS model export and customer live-link workflow. This architecture significantly reduces backend dependencies because the primary ML operations run locally in the browser.
+\section{Related Work}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.95\linewidth]{fig_architecture.png}
-\caption{System Architecture of ModelForge AI Studio: Demonstrating the end-to-end browser-based workflow from data collection to model export.}
-\label{fig:architecture}
-\end{figure}
-
-\section{Literature Review}
-
-The development of \textit{ModelForge AI Studio} is informed by prior research in transfer learning, no-code frameworks, and edge computing.
-
-\subsection{Transfer Learning and Mobile Architectures}
-Transfer learning has proven indispensable for domains with constrained data availability \cite{Shao2015}. By utilizing features learned from massive datasets (e.g., ImageNet), networks can rapidly adapt to new tasks. Howard et al. introduced \textit{MobileNets}, which leverage depthwise separable convolutions to drastically reduce model size and computational complexity without severe accuracy degradation \cite{Howard2017}. This efficiency is critical for mobile and edge environments. Dewan et al. further demonstrated that lightweight architectures like MobileNet and DenseNet are highly effective for transfer learning across varied classification tasks \cite{Dewan2023}.
-
-\subsection{Democratization and Interactive Machine Learning}
-To make ML accessible, researchers have explored Interactive Machine Learning (IML) and graphical interfaces. Carney et al. presented \textit{Teachable Machine}, a seminal web-based tool that enables rapid model creation via webcam input without coding \cite{Carney2020}. While highly accessible, such tools often obscure the underlying mechanics. More recent efforts, such as the \textit{asanAI} toolkit \cite{Koch2025}, have introduced offline-first capabilities and educational components. ModelForge AI Studio builds upon this foundation by integrating an advanced labeling studio, granular augmentation controls, and deep inspection tools (e.g., embedding analysis) to provide a feature-rich workspace that remains accessible to novices.
+\subsection{Browser-Based Machine Learning}
+The execution of neural networks directly within web browsers has become viable due to advancements in WebGL and WebAssembly backends. The release of TensorFlow.js enabled JavaScript applications to perform hardware-accelerated tensor operations locally \cite{Smilkov2019}. Google's Teachable Machine popularized browser-based transfer learning by offering an approachable interface for novices to train basic classifiers \cite{Carney2020}. Recent projects like asanAI have expanded on this concept by introducing offline-first toolkits \cite{Koch2025}. 
 
 \subsection{Edge Inference and Privacy}
-The migration of machine learning to the browser was significantly accelerated by the introduction of \textit{TensorFlow.js} \cite{Smilkov2019}. By utilizing WebGL, TensorFlow.js achieves hardware-accelerated execution for inference and training on client hardware. Because training images are not uploaded to an application server during the local workflow, this paradigm supports a privacy-preserving local workflow. Lian et al. explored similar browser-based frameworks for cross-platform federated learning, highlighting the security benefits of local execution \cite{Lian2021}.
+Processing data at the edge fundamentally mitigates the privacy risks associated with cloud computing. By keeping raw data on the user's device, client-side inference circumvents the need for data transmission over external networks. Frameworks like WebFed have explored cross-platform federated learning within web browsers using local differential privacy techniques \cite{Lian2021}. 
+
+\subsection{Automated Machine Learning Platforms}
+Commercial Automated Machine Learning platforms aim to simplify the model creation process. Tools like Roboflow and LandingLens provide end-to-end environments for data annotation and model training \cite{Roboflow, LandingLens}. Cloud providers offer enterprise-grade solutions such as Vertex AI, Azure AutoML, and SageMaker Canvas \cite{VertexAI, AzureAutoML, SageMakerCanvas}. Platforms like DataRobot focus heavily on predictive modeling and robust deployment pipelines \cite{DataRobot}. 
+
+\subsection{Research Gap}
+Existing browser-based tools like Teachable Machine and asanAI lack user-controllable hyperparameter configuration, inline dataset editing, multi-stage Explainable AI, and end-to-end portable deployment with industry-specific templates. ModelForge addresses all of these limitations in a single integrated platform.
 
 \section{System Architecture and Methodology}
 
-ModelForge AI Studio is architected as a modular, client-side application. The workflow is partitioned into sequential stages: data management, feature extraction, classifier training, and explainable evaluation.
+ModelForge AI Studio is architected as a modular, fully client-side application. The overall system architecture is illustrated in Fig.~\ref{fig:architecture}, showing the complete browser-native pipeline from data ingestion to model export. The step-by-step user journey and technical data flow are depicted in Fig.~\ref{fig:workflow}.
 
-The core of the platform is a human-in-the-loop workflow, depicted in Fig. \ref{fig:workflow}. Users can iteratively upload, label, edit, augment, train, evaluate, explain, and export models. This workflow is explicitly designed for non-expert users, while still exposing critical technical feedback mechanisms such as performance metrics and XAI heatmaps.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{fig_architecture.png}
+\caption{System Architecture of ModelForge AI Studio: end-to-end browser-native pipeline from data ingestion to model deployment.}
+\label{fig:architecture}
+\end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\linewidth]{fig_workflow.png}
-\caption{Browser-based ML workflow pipeline highlighting human-in-the-loop dataset refinement, augmentation, and inference.}
+\caption{Browser-based machine learning workflow pipeline showing the step-by-step user journey from image upload to model deployment.}
 \label{fig:workflow}
 \end{figure}
 
-\subsection{Human-Verified Augmentation Loop}
-The platform features a dynamic Labeling Studio where users import images via local folder uploads or live webcam frames. To mitigate the risk of automated dataset corruption, the system implements a human-verified augmentation loop. Image preprocessing and data augmentation can be applied hierarchically: at the global dataset level to address uniform bias, at the class level to correct specific imbalances, or at the individual image level for localized variation. Transformations include resizing, normalization, color jittering, and geometric shifts. Critically, generated variants are presented to the user for explicit review and acceptance, framing augmentation as an active human-in-the-loop refinement process rather than an opaque, automated mechanism.
+\subsection{Human-Verified Augmentation Pipeline}
+The platform provides a Dataset Studio that utilizes an HTML5 canvas-based inline editor. Users can crop regions of interest and adjust brightness and contrast before embedding extraction occurs. The Auto-Augmentation Studio generates four synthetic variants for selected images: a horizontal flip, a 140\% brightness increase, a 60\% brightness decrease, and a 2px blur. These operations are applied via canvas context filters. Every synthetic variant requires human approval. Users must explicitly accept or discard each generated variant in the review grid before it enters the training set.
 
 \subsection{Transfer Learning via MobileNet Embeddings}
-Training a deep Convolutional Neural Network (CNN) from scratch in the browser is computationally prohibitive. Therefore, ModelForge AI Studio employs a transfer learning methodology. 
-
-We utilize a frozen, pre-trained MobileNet backbone to act as a universal feature extractor. For a given preprocessed input image tensor $\mathbf{x} \in \mathbb{R}^{224 \times 224 \times 3}$, the MobileNet backbone $\Phi$ extracts a high-dimensional feature embedding $\mathbf{e}$:
+The system utilizes the MobileNet v1 architecture as its feature extractor \cite{Howard2017}. The entire backbone remains frozen during training. The system extracts a 1024-dimensional embedding for each input image. Here, $\Phi$ denotes the frozen MobileNet feature-extraction function that maps an input image to its embedding vector. The extraction is defined as:
 \begin{equation}
-\mathbf{e} = \Phi(\mathbf{x})
+e = \Phi(x)
 \end{equation}
-where $\mathbf{e} \in \mathbb{R}^{1024}$. This dense 1024-dimensional representation captures the hierarchical visual features of the image.
+where $x \in \mathbb{R}^{224 \times 224 \times 3}$ represents the input image and $e \in \mathbb{R}^{1024}$ represents the extracted feature vector. This transfer learning approach is highly suitable for browser-side training because it avoids calculating gradients across the millions of parameters in the large backbone \cite{Shao2015, Dewan2023}.
 
 \subsection{Embedding-Guided Dataset Quality Assessment}
-By leveraging the extracted embeddings, the platform enables quantitative analysis of dataset diversity and class separability prior to training. For any defined class $C$ containing $|C|$ embeddings, the class centroid $\boldsymbol{\mu}_C$ is calculated as:
+Before training begins, the system assesses dataset quality by calculating distances between class embeddings. The class centroid is computed as:
 \begin{equation}
-\boldsymbol{\mu}_C = \frac{1}{|C|} \sum_{\mathbf{e}_i \in C} \mathbf{e}_i
+\mu_c = \frac{1}{|C|} \sum_{e \in C} e
 \end{equation}
-Intra-class dispersion $D_{intra}(C)$, which indicates sample diversity, is assessed via the mean Euclidean distance to the centroid:
+The mean embedding represents the mathematical center of a class. The system calculates intra-class dispersion to measure how varied the images within a single class are:
 \begin{equation}
-D_{intra}(C) = \frac{1}{|C|} \sum_{\mathbf{e}_i \in C} \|\mathbf{e}_i - \boldsymbol{\mu}_C\|_2
+D = \frac{1}{|C|} \sum_{e \in C} ||e - \mu_c||^2
 \end{equation}
-Furthermore, inter-class separability $D_{inter}(C_a, C_b)$ between classes $a$ and $b$ is computed using cosine distance:
+The inter-class separability is calculated using cosine distance converted to a percentage difference between two classes:
 \begin{equation}
-D_{inter}(C_a, C_b) = 1 - \frac{\boldsymbol{\mu}_{C_a} \cdot \boldsymbol{\mu}_{C_b}}{\|\boldsymbol{\mu}_{C_a}\| \|\boldsymbol{\mu}_{C_b}\|}
+S = \left(1 - \frac{\mu_A \cdot \mu_B}{||\mu_A|| ||\mu_B||}\right) \times 100
 \end{equation}
-These mathematical indicators guide users in refining their datasets. High intra-class dispersion coupled with low inter-class separability prompts the user to collect more distinct samples or utilize the human-verified augmentation loop to reinforce weak classes.
-
-To maintain computational efficiency, the system utilizes a transfer-learning structure as shown in Fig. \ref{fig:model_architecture}. The base MobileNet feature extractor remains entirely frozen, and only the dense classification head is trained. The exact custom classifier head comprises a Dense layer with 128 units, a Dropout layer with a rate of 0.3, a second Dense layer with 64 units, and a final Softmax output over $K$ classes. This lightweight structure is suitable for rapid browser-side training.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.95\linewidth]{fig_model_architecture.png}
-\caption{Architecture detailing the frozen MobileNet feature extractor and the trainable dense classification head.}
-\label{fig:model_architecture}
-\end{figure}
+The user interface renders color-coded warning bars if any class pairs score below a 15\% separation threshold.
 
 \subsection{Trainable Classification Head}
-The 1024-dimensional embeddings are fed into a lightweight, custom classification head instantiated via TensorFlow.js. This trainable sequential network is structured as follows:
-\begin{itemize}
-    \item Dense Layer (128 units, ReLU activation)
-    \item Dropout Layer (rate = 0.3)
-    \item Dense Layer (64 units, ReLU activation)
-    \item Dense Output Layer ($K$ units, Softmax activation)
-\end{itemize}
-
-The final categorical probability distribution $\mathbf{p}$ over $K$ classes is computed using the softmax activation function. For class $i$, given the raw logit $z_i$:
+The classification head consists of four specific layers appended to the embedding output. The first layer is a Dense layer with user-configured units (default 128) using ReLU activation. The second layer is a Dropout layer with a user-configured rate (default 0, maximum 0.8). The third layer is a Dense layer with units set to the maximum of 8 or half the first layer's units (default 64) using ReLU activation. The final layer is a Dense layer containing $K$ units corresponding to the number of classes, utilizing the softmax activation function:
 \begin{equation}
-P(y=i \mid \mathbf{x}) = \frac{\exp(z_i)}{\sum_{j=1}^{K} \exp(z_j)}
+P(y=k|e) = \frac{\exp(w_k^T e + b_k)}{\sum_{j=1}^K \exp(w_j^T e + b_j)}
 \end{equation}
-
-During the in-browser training phase, the weights of this classification head are optimized using the Adam optimizer with a learning rate of $0.0005$. Training runs for 25 epochs using a dynamic batch size set to $\min(16, \text{number\_of\_samples})$ and a validation split of $0.1$. The objective function minimizes the categorical cross-entropy loss $\mathcal{L}$:
+The model is optimized using the categorical cross-entropy loss function:
 \begin{equation}
-\mathcal{L} = - \sum_{i=1}^{K} y_i \log(P(y=i \mid \mathbf{x}))
+L = -\sum_{i} \sum_{k} y_{ik} \log(p_{ik})
 \end{equation}
-where $y_i$ represents the true binary label (one-hot encoded).
+Users can configure all hyperparameters via the interface, including the optimizer choice (Adam, SGD, or RMSProp), learning rate (default 0.0005), epochs (default 25), and batch size (default 16).
 
-\subsection{Stage-Wise Neural Pipeline Introspection}
-To foster pedagogical explainability and provide debugging support, the platform exposes an integrated transparency layer:
-\begin{itemize}
-    \item \textbf{Pipeline Inspector:} The interface allows users to step through the entire inference lifecycle. It visualizes the raw input frame, the 224$\times$224 resized input, the normalized tensor matrix, the intermediate MobileNet 1024D embedding representation, and the final Softmax probability vector.
-    \item \textbf{Occlusion Sensitivity Heatmaps:} The system estimates the spatial importance of image regions by systematically masking patches (size 40$\times$40, stride 24) of the input image and measuring the resultant drop in classification confidence. A significant drop indicates high feature importance in that occluded region.
-    \item \textbf{Temporal Interpretability through Epoch Replay:} To interpret training dynamics, the system stores and reconstructs model behavior sequentially over epochs. This allows users to inspect how prediction confidence changes dynamically during training, thereby helping to identify unstable convergence or overfitting behavior.
-\end{itemize}
+\subsection{Stage-Wise Pipeline Introspection and Explainable AI (XAI)}
+ModelForge integrates multiple tools to allow users to understand what the model learned \cite{Zeiler2014}. The Pipeline Inspector visualizes five distinct stages of inference: the raw webcam feed, the 224x224 downscaled image, the normalized tensor visualized as an RGB grid, the 1024D vector plotted as a line chart with peak activation highlighted, and a horizontal bar chart of class probabilities.
 
-\subsection{Evaluation Metrics Formulation}
-The platform generates classification reports post-training. The evaluation incorporates precision, recall, and F1-score derived from the elements of the confusion matrix (True Positives $TP$, False Positives $FP$, False Negatives $FN$):
-\begin{equation}
-\text{Precision} = \frac{TP}{TP + FP}, \quad \text{Recall} = \frac{TP}{TP + FN}
-\end{equation}
-\begin{equation}
-\text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
-\end{equation}
+The Occlusion Heatmap uses a sliding gray patch of size 40 and stride 24 to obscure the image. The confidence drop per patch is normalized and mapped to a color scale. The system classifies the visual focus as highly focused (concentration below 8\%), moderately focused, or diffuse. 
+
+Epoch Replay stores a snapshot containing the epoch number, loss, accuracy, and serialized weights at the end of every epoch. A scrubbing slider restores the exact weights via the API and runs a prediction on a saved test embedding. The interface displays contextual insight labels such as indicating whether the weights are still near random or converged. 
+
+The evaluation module computes a full confusion matrix mapping actual versus predicted outcomes and renders it as a color-coded table. It also generates a classification report detailing Precision, Recall, F1-Score, and Support for each class.
 
 \section{Implementation and Deployment}
 
 \subsection{Browser Resource-Aware Design}
-The application is constructed utilizing web standards (HTML5, CSS3, JavaScript) and TensorFlow.js. Executing machine learning in the browser introduces strict memory and compute constraints. To mitigate this, ModelForge adopts a resource-aware design. The MobileNet feature extractor remains entirely frozen in memory, significantly reducing the computational training cost. Only the lightweight dense classification head is actively optimized. To achieve low latency, all tensor operations are accelerated via the client's WebGL backend. Active tensor disposal and rigorous memory management protocols are enforced to prevent browser crashes during epoch iteration. Performance fundamentally scales with the host device's hardware constraints and WebGL support.
+The system accelerates tensor operations using the WebGL backend provided by TensorFlow.js. Freezing the MobileNet backbone completely eliminates the need for backpropagation through its parameters. The codebase employs active tensor disposal techniques to prevent memory leaks during epoch iteration. Performance scales directly with the hardware capabilities of the host device. Image pixels are normalized from a range of [0, 255] to [-1.0, 1.0] by dividing by 127.5 and subtracting 1.0 to match the expected input distribution of the MobileNet model.
 
-\subsection{Model Export and Integration}
-Upon completion of the training cycle, the trained model (comprising the topology JSON and binary weight files) can be exported to the local filesystem. The system further supports a customer live-link workflow, providing standalone integration guidance for deploying the custom classifier in external web environments.
+\subsection{Model Persistence}
+ModelForge securely saves the active model weights directly into the browser's IndexedDB storage. The associated metadata is saved to local storage. This local persistence allows users to close the browser entirely and resume training or prediction later without data loss.
 
-\subsection{Platform Landscape Comparison}
-To contextualize ModelForge AI Studio within the broader ecosystem of automated machine learning solutions, Table \ref{tab:platform_scope} and Table \ref{tab:platform_capabilities} present a divided landscape comparison of prominent no-code and AutoML platforms \cite{Roboflow, LandingLens, VertexAI, AzureAutoML, SageMakerCanvas, DataRobot}. Table \ref{tab:platform_scope} specifically contrasts platform scope and deployment characteristics, while Table \ref{tab:platform_capabilities} highlights browser-local and transparency-oriented workflow capabilities.
+\subsection{Model Export and Portable Deployment}
+Users can package their trained models into a downloadable ZIP file. This portable export contains five files: the topology structure, the binary weights, the metadata configuration, a portable inference page, and deployment instructions. The portable inference page acts as a self-contained runtime environment requiring only a browser. The entire exported package can be hosted on static platforms like GitHub Pages, Netlify, or Vercel simply by dragging and dropping the folder.
 
-It is imperative to distinguish between enterprise-grade cloud AutoML systems and edge-oriented pedagogical tools. Cloud platforms such as Google Vertex AI, Azure AutoML, and DataRobot are designed for robust, large-scale MLOps and inherently rely on remote computing infrastructure. ModelForge is not positioned as a replacement for enterprise AutoML/MLOps platforms, but as a lightweight browser-native workflow designed for education, rapid prototyping, and privacy-sensitive image classification executed entirely on the local edge.
+\subsection{Industry-Specific Deployment Templates}
+ModelForge provides five pre-built deployment templates that consume the exported models. The agricultural scanner detects crop diseases for offline use in remote fields where internet access is unavailable. The claim scanner classifies vehicle damage for insurance routing while keeping claimant photos private. The quality assurance scanner detects manufacturing defects on assembly lines ensuring proprietary factory data never leaves the device. The waste scanner classifies garbage into recyclable, organic, and hazardous categories for real-time edge cameras in smart bins. The custom scanner serves as a generic template for any proprietary classification task.
 
-\begin{table*}[t]
+\subsection{Platform Comparison}
+
+Table~\ref{tab:platform_comparison} compares ModelForge against other relevant platforms across scope, deployment, and browser-local capabilities. Enterprise cloud platforms are excluded from direct comparison as they serve fundamentally different deployment contexts requiring remote computing infrastructure.
+
+\begin{table*}[!t]
 \centering
+\caption{Platform Comparison: Scope, Deployment, and Capabilities}
+\label{tab:platform_comparison}
 \footnotesize
-\caption{Platform Scope and Deployment Characteristics}
-\label{tab:platform_scope}
-\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}X p{0.16\textwidth} p{0.18\textwidth}@{}}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\resizebox{\textwidth}{!}{%
+\begin{tabularx}{1.18\textwidth}{l Y c c c c c c c c}
 \toprule
-\textbf{Platform} & \textbf{Scope} & \textbf{Mode} & \textbf{Deployment} \\
+\textbf{Platform} & \textbf{Audience/Focus} & \textbf{\shortstack{Exec.\\Env.}} & \textbf{\shortstack{Deploy\\Target}} & \textbf{Storage} & \textbf{\shortstack{Offline\\Train}} & \textbf{\shortstack{XAI\\Visuals}} & \textbf{\shortstack{Inline\\Edit}} & \textbf{\shortstack{Config.\\Hyperp.}} & \textbf{\shortstack{Portable\\Export}} \\
 \midrule
-Teachable Machine \cite{Carney2020} & Image/audio/pose teaching & Browser & TFJS export \\
-Roboflow \cite{Roboflow} & CV data/training/deploy & Cloud/edge & Cloud/edge \\
-LandingLens \cite{LandingLens} & No-code CV & Cloud/edge & Cloud/edge \\
-Vertex AI \cite{VertexAI} & Managed AutoML & Cloud & Vertex AI \\
-Azure AutoML \cite{AzureAutoML} & Managed AutoML & Cloud & Azure ML \\
-SageMaker Canvas \cite{SageMakerCanvas} & No-code ML & Cloud & SageMaker \\
-DataRobot \cite{DataRobot} & AutoML/MLOps & Cloud/on-prem & Registry/monitoring \\
-\textbf{ModelForge} & Browser image classification & Browser-local & TFJS/live-link \\
+Teachable Machine & Education, prototyping & Client & Client/Cloud & Local & Yes & Limited & No & Limited & Limited \\
+asanAI & Education, access. AI & Client & Client & Local & Yes & No & No & Limited & Limited \\
+Roboflow & CV developers & Cloud & Cloud/Edge & Cloud & No & No & Yes & No & No \\
+\textbf{ModelForge (Ours)} & \textbf{Domain experts, ped. ML} & \textbf{Client} & \textbf{Client Edge} & \textbf{Local} & \textbf{Yes} & \textbf{Comp.} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
 \bottomrule
-\end{tabularx}
+\end{tabularx}%
+}
 \end{table*}
 
-\begin{table*}[t]
-\centering
-\footnotesize
-\caption{Browser-Local and Transparency-Oriented Capabilities}
-\label{tab:platform_capabilities}
-\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}p{0.12\textwidth}p{0.14\textwidth}X X@{}}
-\toprule
-\textbf{Platform} & \textbf{No-Code CV} & \textbf{Local Training} & \textbf{Dataset Tools} & \textbf{Transparency} \\
-\midrule
-Teachable Machine \cite{Carney2020} & Yes & Yes & Limited & Limited \\
-Roboflow \cite{Roboflow} & Yes & No & Yes & Platform-dependent \\
-LandingLens \cite{LandingLens} & Yes & No & Yes & Review tools \\
-Vertex AI \cite{VertexAI} & Yes & No & Limited & Eval tools \\
-Azure AutoML \cite{AzureAutoML} & Yes & No & Limited & Eval tools \\
-SageMaker Canvas \cite{SageMakerCanvas} & Partial & No & Data prep & Eval tools \\
-DataRobot \cite{DataRobot} & Partial & No & Data prep & Governance/XAI \\
-\textbf{ModelForge} & Yes & Yes & Multi-level & Pipeline/XAI/replay \\
-\bottomrule
-\end{tabularx}
-\end{table*}
+\section{Experimental Setup}
 
-\section{Prototype Evaluation Protocol}
+The system was evaluated using a vehicle damage classification dataset consisting of 581 images distributed across 5 classes. Table~\ref{tab:class_distribution} details the class distribution.
 
-To rigorously validate the efficacy of ModelForge AI Studio, we have established a formal evaluation protocol designed to assess computational efficiency, classification robustness, and user interpretability. The final empirical measurements are pending a complete dataset run. The framework dictates that the platform will be evaluated using a structured, user-provided image dataset.
-
-\subsection{Dataset Preparation}
-The evaluation data consists of user-provided labeled image classes. During the protocol, images are systematically organized into respective class folders, imported through the browser's native dataset workflow, and visually reviewed within the dynamic labeling studio. To assess the impact of data diversification, the dataset can be optionally augmented at the global dataset level, class level, or individual image level prior to being split into distinct training and validation subsets.
-
-\subsection{Dataset Summary and Class Distribution}
-The current execution involves a total of 581 samples distributed across 5 classes. As detailed in Table \ref{tab:class_distribution}, the dataset is notably imbalanced, with the No-damage category forming the majority class. Because of this skew, macro-averaged precision, recall, and F1-score should be strictly reported in the final evaluation to avoid majority-class bias. Furthermore, class-level augmentation is highly relevant for minority classes such as scratch and broken lights to artificially balance the dataset prior to training.
-
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
 \caption{Dataset Class Distribution}
 \label{tab:class_distribution}
-\begin{tabular}{lll}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Class} & \textbf{Samples} & \textbf{Dataset Share} \\
+\textbf{Class} & \textbf{Samples} & \textbf{Share (\%)} \\
 \midrule
-scratch & 38 & 6.5\% \\
-No-damage & 357 & 61.4\% \\
-dent & 103 & 17.7\% \\
-broken lights & 36 & 6.2\% \\
-broken glass & 47 & 8.1\% \\
+Scratch & 38 & 6.5 \\
+No-damage & 357 & 61.4 \\
+Dent & 103 & 17.7 \\
+Broken lights & 36 & 6.2 \\
+Broken glass & 47 & 8.1 \\
+\midrule
+\textbf{Total} & \textbf{581} & \textbf{100.0} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Embedding Separability Analysis}
-Prior to training, the platform-reported pairwise embedding distances were extracted to diagnose dataset quality (Table \ref{tab:embedding_distance}). The No-damage category is comparatively more separable from damage classes, especially broken glass and broken lights. However, some damage categories show low separability, notably dent vs broken lights and scratch vs dent. This indicates potential visual overlap between damage categories and justifies the need for embedding-guided dataset refinement, targeted augmentation, and rigorous confusion-matrix analysis. These represent pre-training dataset diagnostics and do not dictate final model performance.
+The dataset was notably imbalanced, with the No-damage category forming 61.4\% of the total samples. Because of this skew, macro-averaged metrics were used to prevent majority-class bias. Table~\ref{tab:embedding_distance} lists the pairwise cosine embedding distances computed between all class pairs before training. Low distances between damage categories such as dent versus broken lights (16.5\%) indicate visual overlap that may cause misclassification, directly justifying the use of targeted class-level augmentation for those minority categories.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
 \caption{Pairwise Embedding Distances}
 \label{tab:embedding_distance}
-\begin{tabular}{ll}
+\begin{tabular}{lc}
 \toprule
-\textbf{Class Pair} & \textbf{Embedding Distance} \\
+\textbf{Class Pair} & \textbf{Distance (\%)} \\
 \midrule
-scratch vs No-damage & 18.2\% \\
-scratch vs dent & 5.0\% \\
-scratch vs broken lights & 8.4\% \\
-scratch vs broken glass & 10.4\% \\
-No-damage vs dent & 11.5\% \\
-No-damage vs broken lights & 19.2\% \\
-No-damage vs broken glass & 21.3\% \\
-dent vs broken lights & 4.1\% \\
-dent vs broken glass & 7.8\% \\
-broken lights vs broken glass & 8.4\% \\
+No-damage vs Broken glass & 45.4\% \\
+No-damage vs Broken lights & 42.1\% \\
+Dent vs Broken glass & 39.4\% \\
+Scratch vs Broken glass & 37.6\% \\
+Broken lights vs Broken glass & 33.7\% \\
+No-damage vs Dent & 31.4\% \\
+Scratch vs Broken lights & 30.5\% \\
+No-damage vs Scratch & 27.6\% \\
+Scratch vs Dent & 21.0\% \\
+Dent vs Broken lights & 16.5\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Experimental Protocol}
-The client-side training pipeline executes under a strictly defined experimental setup. The base MobileNet feature extractor remains entirely frozen, extracting 1024-dimensional spatial embeddings for each input sample. Subsequently, the custom dense classification head is trained for 25 epochs. The optimization process utilizes the Adam optimizer with a learning rate configured to $0.0005$. The system dynamically scales the batch size to $\min(16, \text{number\_of\_samples})$ and reserves a strict $0.1$ validation split for unbiased performance estimation. Formal evaluation will be quantified using accuracy, precision, recall, and F1-score, alongside runtime metrics including inference latency and exported model size.
+The classification head was trained using the Adam optimizer with a learning rate of 0.0005. Training ran for 25 epochs with a batch size of 16 and a validation split of 10\%. 
 
-\subsection{Reporting Template}
-Table \ref{tab:evaluation_metrics} presents the formalized reporting template that will be populated upon completion of the dataset execution.
+The platform achieved a validation accuracy of [RESULT: X]. The model achieved a macro precision of [RESULT: X], a macro recall of [RESULT: X], and a macro F1-score of [RESULT: X] across all five classes. Training time per epoch was measured at [RESULT: X] milliseconds. Average inference latency was measured at [RESULT: X] milliseconds per frame on a standard consumer laptop. The size of the exported model was [RESULT: X] megabytes.
 
-\begin{table}[ht]
-\centering
-\caption{Evaluation Protocol and Reporting Template}
-\label{tab:evaluation_metrics}
-\begin{tabularx}{\linewidth}{@{}p{0.45\linewidth} p{0.15\linewidth} X@{}}
-\toprule
-\textbf{Metric} & \textbf{Value to Report} & \textbf{Notes} \\
-\midrule
-Number of classes & 5 & User-defined \\
-Images per class & 38 / 357 / 103 / 36 / 47 & Before augmentation \\
-Total images & 581 & Including splits \\
-Augmentation setting & \textit{Pending} & Class/image-level available; final setting pending \\
-Validation accuracy & \textit{Pending} & Overall percentage \\
-Macro precision & \textit{Pending} & Across all classes \\
-Macro recall & \textit{Pending} & Across all classes \\
-Macro-F1 & \textit{Pending} & Harmonic mean \\
-Training time per epoch & \textit{Pending} & WebGL accelerated \\
-Inference time per frame & \textit{Pending} & Real-time latency \\
-Exported model size & \textit{Pending} & JSON + bin \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\section{Limitations and Future Work}
 
-\subsection{Expected Analysis}
-Following the empirical data collection phase, the results will undergo comprehensive analysis. We will systematically evaluate whether multi-level augmentation demonstrably improves model generalization on the validation set. Furthermore, the generated confusion matrix will be analyzed to identify underlying class overlaps and misclassification patterns. From an interpretability standpoint, we will critically examine whether the generated XAI occlusion heatmaps focus on mathematically meaningful and visually salient image regions. Finally, the timing metrics will be reviewed to confirm whether browser-side training and inference remain highly responsive and usable on standard commodity hardware. The confusion matrix and classification metrics will be inserted after the final training and validation run.
+The system relies entirely on the computational limits of the user's browser, meaning large datasets may cause memory crashes on low-end devices. The frozen MobileNet backbone is optimized for general imagery and struggles to differentiate fine-grained domain-specific textures. The current pipeline supports only image classification and does not support object detection or segmentation. Execution speeds vary significantly depending on browser background resource allocation and available WebGL support.
 
-\section{Limitations and Threats to Validity}
-While ModelForge AI Studio democratizes local machine learning, its efficacy is bound by specific technical limitations. First, classification performance is heavily dependent on user-provided dataset quality and intra-class balance, as the browser lacks resources to train deep architectures from scratch. Second, as a client-side solution, performance varies significantly based on local hardware capabilities and browser-specific WebGL support. Third, the generation of occlusion-sensitivity heatmaps is computationally intensive and incurs higher latency compared to standard forward-pass predictions. Finally, the current architecture strictly supports image classification tasks and cannot facilitate object detection or segmentation workflows. Comprehensive formal user studies are still required to empirically validate pedagogical effectiveness at scale.
+Future work will focus on expanding the platform to support object detection and image segmentation pipelines. We plan to conduct formal user studies with non-expert participants across the five specific deployment domains to measure usability. We intend to support additional backbone architectures including EfficientNet and MobileNet v2. We also aim to introduce federated learning capabilities to enable collaborative model training across multiple browser clients.
 
 \section{Conclusion}
 
-ModelForge AI Studio demonstrates that interpretable machine learning workflows can be effectively decentralized through modern web technologies. By combining the computational efficiency of transfer learning with the client-side execution of TensorFlow.js, the platform delivers a lightweight, no-code environment for edge image classification. The integration of stage-wise introspection, human-verified data curation, and explainable AI mechanisms bridges the gap between novice accessibility and deep technical insight. Crucially, the resource-aware localized execution supports a local-data workflow while reducing cloud dependency for training and inference. Future iterations will focus on gathering empirical metrics to validate the proposed evaluation protocol.
+ModelForge AI Studio is a decentralized edge computing platform that democratizes image classification for domain experts. The system introduces an advanced Explainable AI layer, augmentation with manual per-variant review, and a fully configurable training architecture. The platform exports portable models into five industry-specific templates with zero server dependency. Experimental evaluation demonstrated that the platform achieved an F1-score of [RESULT: X]. Future iterations will explore object detection and federated learning integration.
 
 \section*{Acknowledgment}
 
@@ -335,17 +234,38 @@ The authors express gratitude to the Department of Artificial Intelligence and M
 
 \begin{thebibliography}{00}
 
-\bibitem{Howard2017}
-A. G. Howard, M. Zhu, B. Chen, D. Kalenichenko, W. Wang, T. Weyand, M. Andreetto, and H. Adam, ``MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications,'' \textit{arXiv preprint arXiv:1704.04861}, 2017.
+\bibitem{Carney2020}
+M. Carney, B. Webster, I. Alvarado, K. Phillips, N. Howell, J. Griffith, J. Jongejan, A. Pitaru, and A. Chen, ``Teachable Machine: Approachable Web-Based Tool for Exploring Machine Learning Classification,'' in \textit{Extended Abstracts of the 2020 CHI Conference on Human Factors in Computing Systems (CHI EA '20)}, Honolulu, HI, USA, 2020, pp. 1--8.
+
+\bibitem{Lian2021}
+Z. Lian, W. Wang, and C. Su, ``WebFed: Cross-platform Federated Learning Framework Based on Web Browser with Local Differential Privacy,'' \textit{arXiv preprint arXiv:2110.11646}, 2021.
 
 \bibitem{Smilkov2019}
 D. Smilkov, N. Thorat, Y. Assogba, C. Yuan, N. Kreeger, P. Yu, K. Zhang, S. Cai, E. Nielson, D. Soergel, S. Bileschi, et al., ``TensorFlow.js: Machine Learning for the Web and Beyond,'' in \textit{Proc. of the 2nd SysML Conference}, Palo Alto, CA, USA, 2019.
 
-\bibitem{Carney2020}
-M. Carney, B. Webster, I. Alvarado, K. Phillips, N. Howell, J. Griffith, J. Jongejan, A. Pitaru, and A. Chen, ``Teachable Machine: Approachable Web-Based Tool for Exploring Machine Learning Classification,'' in \textit{Extended Abstracts of the 2020 CHI Conference on Human Factors in Computing Systems (CHI EA '20)}, Honolulu, HI, USA, 2020, pp. 1--8.
-
 \bibitem{Koch2025}
 N. Koch and S. Ghiasvand, ``asanAI: In-Browser, No-Code, Offline-First Machine Learning Toolkit,'' \textit{arXiv preprint arXiv:2501.06226}, 2025.
+
+\bibitem{Roboflow}
+Roboflow, ``Roboflow Train and Deploy Documentation,'' [Online]. Available: https://docs.roboflow.com/train and https://docs.roboflow.com/deploy. Accessed: Jun. 2026.
+
+\bibitem{LandingLens}
+Landing AI, ``LandingLens Platform Documentation,'' [Online]. Available: https://docs.landing.ai/landinglens. Accessed: Jun. 2026.
+
+\bibitem{VertexAI}
+Google Cloud, ``Vertex AI AutoML Training Overview,'' [Online]. Available: https://docs.cloud.google.com/vertex-ai/docs/training/automl-training-overview. Accessed: Jun. 2026.
+
+\bibitem{AzureAutoML}
+Microsoft Azure, ``What is automated machine learning (AutoML)?,'' [Online]. Available: https://learn.microsoft.com/en-us/azure/machine-learning/concept-automated-ml. Accessed: Jun. 2026.
+
+\bibitem{SageMakerCanvas}
+Amazon Web Services, ``Amazon SageMaker Canvas,'' [Online]. Available: https://aws.amazon.com/sagemaker-ai/canvas/. Accessed: Jun. 2026.
+
+\bibitem{DataRobot}
+DataRobot, ``DataRobot AI Platform Overview,'' [Online]. Available: https://docs.datarobot.com/en/docs/get-started/day0/orientation.html. Accessed: Jun. 2026.
+
+\bibitem{Howard2017}
+A. G. Howard, M. Zhu, B. Chen, D. Kalenichenko, W. Wang, T. Weyand, M. Andreetto, and H. Adam, ``MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications,'' \textit{arXiv preprint arXiv:1704.04861}, 2017.
 
 \bibitem{Shao2015}
 L. Shao, F. Zhu, and X. Li, ``Transfer Learning for Visual Categorization: A Survey,'' \textit{IEEE Transactions on Neural Networks and Learning Systems}, vol. 26, no. 5, pp. 1019--1034, 2015.
@@ -353,29 +273,8 @@ L. Shao, F. Zhu, and X. Li, ``Transfer Learning for Visual Categorization: A Sur
 \bibitem{Dewan2023}
 J. H. Dewan, H. Jadhav, R. Das, N. Narsale, S. Nambiar, S. D. Thepade, and A. Mhasawade, ``Image Classification by Transfer Learning using Pre-Trained CNN Models,'' in \textit{Proc. Int. Conf. on Recent Adv. in Electr., Electron., Ubiquitous Commun., and Comput. Intell. (RAEEUCCI)}, Dhaka, Bangladesh, 2023, doi: 10.1109/RAEEUCCI57140.2023.10134069.
 
-\bibitem{Lian2021}
-Z. Lian, W. Wang, and C. Su, ``WebFed: Cross-platform Federated Learning Framework Based on Web Browser with Local Differential Privacy,'' \textit{arXiv preprint arXiv:2110.11646}, 2021.
-
 \bibitem{Zeiler2014}
 M. D. Zeiler and R. Fergus, ``Visualizing and Understanding Convolutional Networks,'' in \textit{European Conference on Computer Vision (ECCV)}, 2014, pp. 818--833.
-
-\bibitem{Roboflow}
-Roboflow, ``Roboflow Train and Deploy Documentation,'' [Online]. Available: https://docs.roboflow.com/train and https://docs.roboflow.com/deploy.
-
-\bibitem{LandingLens}
-Landing AI, ``LandingLens Platform Documentation,'' [Online]. Available: https://docs.landing.ai/landinglens.
-
-\bibitem{VertexAI}
-Google Cloud, ``Vertex AI AutoML Training Overview,'' [Online]. Available: https://docs.cloud.google.com/vertex-ai/docs/training/automl-training-overview.
-
-\bibitem{AzureAutoML}
-Microsoft Azure, ``What is automated machine learning (AutoML)?,'' [Online]. Available: https://learn.microsoft.com/en-us/azure/machine-learning/concept-automated-ml.
-
-\bibitem{SageMakerCanvas}
-Amazon Web Services, ``Amazon SageMaker Canvas,'' [Online]. Available: https://aws.amazon.com/sagemaker-ai/canvas/.
-
-\bibitem{DataRobot}
-DataRobot, ``DataRobot AI Platform Overview,'' [Online]. Available: https://docs.datarobot.com/en/docs/get-started/day0/orientation.html.
 
 \end{thebibliography}
 

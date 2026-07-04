@@ -1,5 +1,5 @@
 import { setStatus } from '../utils.js';
-import { captureModelFilesForDeployment } from './persistence.js';
+import { captureModelFilesForDeployment, buildExportMetadata } from './persistence.js';
 
 const ZIP_VERSION = 20;
 
@@ -179,4 +179,14 @@ export async function prepareDeploymentPackage() {
   const stamp = new Date().toISOString().slice(0, 10);
   downloadBlob(zip, `modelforge-deploy-${stamp}.zip`);
   setStatus('Deployment ZIP ready. Upload it to any static host.', 'ready');
+}
+
+export async function getModelZipSize() {
+  const modelFiles = await captureModelFilesForDeployment();
+  const zip = createZip([
+    { path: 'model/model.json', data: modelFiles.modelJson },
+    { path: 'model/model.weights.bin', data: modelFiles.weights },
+    { path: 'model/metadata.json', data: modelFiles.metadataJson }
+  ]);
+  return zip.size / (1024 * 1024); // Size in MB
 }

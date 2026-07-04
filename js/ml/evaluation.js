@@ -1,4 +1,5 @@
 import { store } from '../store.js';
+import { getModelZipSize } from './deployment.js';
 
 /**
  * Calculates and renders the Confusion Matrix and Evaluation Metrics
@@ -41,8 +42,10 @@ export async function evaluateModel() {
 
   // Calculate Precision, Recall, F1 for each class
   const metrics = [];
+  let totalCorrect = 0;
   for (let i = 0; i < numClasses; i++) {
     let tp = matrix[i][i];
+    totalCorrect += tp;
     let fp = 0;
     let fn = 0;
     
@@ -64,6 +67,63 @@ export async function evaluateModel() {
       f1,
       support: tp + fn
     });
+  }
+
+  // Calculate macro averages
+  let sumPrecision = 0, sumRecall = 0, sumF1 = 0;
+  metrics.forEach(m => {
+    sumPrecision += m.precision;
+    sumRecall += m.recall;
+    sumF1 += m.f1;
+  });
+  
+  store.evaluationMetrics.evalAccuracy = totalSamples > 0 ? totalCorrect / totalSamples : 0;
+  store.evaluationMetrics.macroPrecision = sumPrecision / numClasses;
+  store.evaluationMetrics.macroRecall = sumRecall / numClasses;
+  store.evaluationMetrics.macroF1 = sumF1 / numClasses;
+
+  // Single-frame Inference Latency Benchmark
+  if (store.backbone && store.classifier) {
+    try {
+      const dummyCanvas = document.createElement('canvas');
+      dummyCanvas.width = store.backbone.inputSize || 224;
+      dummyCanvas.height = store.backbone.inputSize || 224;
+
+      // Warm up
+      for (let w = 0; w < 3; w++) {
+        const warmupEmb = store.backbone.infer(dummyCanvas);
+        const warmupPred = store.classifier.predict(warmupEmb);
+        await Promise.all([warmupEmb.data(), warmupPred.data()]);
+        warmupEmb.dispose();
+        warmupPred.dispose();
+      }
+
+      // Benchmark loops
+      const numRuns = 20;
+      let totalLatency = 0;
+      for (let i = 0; i < numRuns; i++) {
+        const startTime = performance.now();
+        const emb = store.backbone.infer(dummyCanvas);
+        const pred = store.classifier.predict(emb);
+        await Promise.all([emb.data(), pred.data()]);
+        const endTime = performance.now();
+        totalLatency += (endTime - startTime);
+        
+        emb.dispose();
+        pred.dispose();
+      }
+      
+      store.evaluationMetrics.avgInferenceLatency = totalLatency / numRuns;
+    } catch (e) {
+      console.warn("Latency benchmark failed", e);
+    }
+  }
+
+  // Calculate ZIP Size
+  try {
+    store.evaluationMetrics.modelZipSizeMB = await getModelZipSize();
+  } catch (e) {
+    console.warn("Could not calculate ZIP size", e);
   }
 
   // Render Confusion Matrix

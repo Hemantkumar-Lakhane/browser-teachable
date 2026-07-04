@@ -29,6 +29,9 @@ export const store = {
     hiddenUnits: 128
   },
   
+  // Stored metrics for final report
+  evaluationMetrics: {},
+  
   // Custom classes the user manages
   classes: [],
   nextClassId: 0,
