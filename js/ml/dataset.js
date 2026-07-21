@@ -33,11 +33,15 @@ export function extractEmbedding(src) {
 export async function computeClassMeans() {
   store.classMeans = [];
   for (const cls of store.classes) {
-    if (!cls.embeddings.length) { store.classMeans.push(null); continue; }
+    if (!cls.embeddings.length) {
+      store.classMeans.push(null);
+      continue;
+    }
     const stacked = tf.stack(cls.embeddings);
     const mean = tf.mean(stacked, 0);
     store.classMeans.push(await mean.data());
-    stacked.dispose(); mean.dispose();
+    stacked.dispose();
+    mean.dispose();
   }
 }
 
@@ -55,14 +59,15 @@ export async function checkSampleVariance() {
     const mean = tf.mean(stacked, 0, true);
     const diff = stacked.sub(mean);
     const variance = tf.mean(tf.square(diff)).arraySync();
-    stacked.dispose(); mean.dispose(); diff.dispose();
-
+    stacked.dispose();
+    mean.dispose();
+    diff.dispose();
     if (variance < 0.005) {
       warnings.push(`"${cls.name}" (samples look very similar — add more variety)`);
     }
   }
   if (warnings.length) {
-    warnEl.innerHTML = `⚠️ Low variety detected in: ${warnings.join(', ')}. Try different angles, distances, or lighting.`;
+    warnEl.setHTMLUnsafe(`⚠️ Low variety detected in: ${warnings.join(', ')}. Try different angles, distances, or lighting.`);
     warnEl.style.display = 'block';
   } else {
     warnEl.style.display = 'none';

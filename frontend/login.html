@@ -146,14 +146,6 @@
       </div>
 
       <button class="btn" id="loginBtn">Secure Sign In</button>
-      
-      <div style="margin-top: 15px; text-align: center; position: relative;">
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 15px 0;">
-        <span style="position: absolute; top: 7px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; font-size: 0.8rem; color: #64748b;">OR</span>
-      </div>
-
-      <button class="btn" id="demoLoginBtn" style="background: #10b981; color: white; margin-top: 25px;">🚀 One-Click Demo Login (Recruiters)</button>
-
       <div class="error-msg" id="errorMsg">Incorrect username or password.</div>
 
       <!-- Demo Credentials Reference -->
@@ -172,56 +164,27 @@
   </div>
 
   <script>
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const u = document.getElementById('username').value.trim();
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      const u = document.getElementById('username').value.trim().toLowerCase();
       const p = document.getElementById('password').value.trim();
       const err = document.getElementById('errorMsg');
-      const btn = document.getElementById('loginBtn');
 
-      if (!u || !p) {
-        err.textContent = 'Please enter username and password.';
-        err.style.display = 'block';
-        return;
+      if (u === 'admin' && p === 'admin') {
+        err.style.display = 'none';
+        window.location.href = 'index.html'; // Navigates to the Training Lab
+      } 
+      else if (u === 'agent' && p === 'agent') {
+        err.style.display = 'none';
+        window.location.href = 'agent.html'; // Navigates to the Surveyor Dashboard
+      } 
+      else if (u === 'customer' && p === 'customer') {
+        err.style.display = 'none';
+        window.location.href = 'customer-link.html'; // Navigates to the Customer Zero-Trust flow
       }
-
-      try {
-        btn.textContent = 'Authenticating...';
-        btn.disabled = true;
-
-        const response = await fetch('http://localhost:3000/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // Token is securely handled via HttpOnly cookies by the backend
-          err.style.display = 'none';
-          
-          // Role-Based Navigation
-          if (data.role === 'admin') window.location.href = 'index.html';
-          else if (data.role === 'agent') window.location.href = 'agent.html';
-          else window.location.href = 'customer-link.html';
-        } else {
-          const errorData = await response.json();
-          err.textContent = errorData.message || 'Incorrect username or password.';
-          err.style.display = 'block';
-        }
-      } catch (error) {
-        err.textContent = 'Network error. Please ensure backend is running.';
+      else {
         err.style.display = 'block';
-      } finally {
-        btn.textContent = 'Secure Sign In';
-        btn.disabled = false;
         setTimeout(() => err.style.display = 'none', 3000); // hide after 3 sec
       }
-    });
-
-    document.getElementById('demoLoginBtn').addEventListener('click', () => {
-      document.getElementById('username').value = 'demo@example.com';
-      document.getElementById('password').value = 'password123';
-      document.getElementById('loginBtn').click();
     });
 
     // Enter key support

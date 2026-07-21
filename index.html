@@ -333,6 +333,33 @@
             <button class="btn btn-stop" id="stopLiveBtn" disabled>⏹ Stop</button>
           </div>
         </section>
+
+        <section class="prediction-method" aria-labelledby="predictBatchTitle">
+          <div class="prediction-method-head">
+            <div>
+              <h4 id="predictBatchTitle">Batch Test (Folder)</h4>
+              <p>Evaluate model on a held-out test folder.</p>
+            </div>
+          </div>
+          <div class="webcam-predict-panel" style="margin-bottom:8px;">
+            <div class="webcam-predict-icon">📁</div>
+            <div>
+              <strong>Select Test Dataset</strong>
+              <span style="font-size:0.75rem;display:block;">Subfolders act as true labels.</span>
+            </div>
+          </div>
+          <input type="file" id="batchTestFolderInput" accept="image/*" webkitdirectory directory multiple style="display:none;">
+          <button class="btn btn-outline predict-action-btn" id="predictBatchSelectBtn" type="button" disabled>📁 Select Test Folder</button>
+          
+          <div id="batchTestProgress" style="display:none; margin-top:10px;">
+            <div style="font-size:0.75rem; color:#475569; margin-bottom:4px;" id="batchTestStatus">Processing...</div>
+            <div class="progress-wrap" style="height:6px; margin:0;"><div class="progress-bar" id="batchTestProgressBar" style="width:0%;"></div></div>
+          </div>
+          
+          <div id="batchTestResults" style="display:none; margin-top:10px;">
+            <button class="btn btn-green predict-action-btn" id="downloadTestReportBtn" type="button">📄 Download Test Report</button>
+          </div>
+        </section>
       </div>
       <div id="predBars">
         <div style="font-size:0.82rem;color:#a0aec0;">Train the model first, then predict here.</div>
